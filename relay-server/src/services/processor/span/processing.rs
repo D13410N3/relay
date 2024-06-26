@@ -34,6 +34,7 @@ use crate::services::processor::{
 use crate::statsd::{RelayCounters, RelayHistograms};
 use crate::utils::{sample, BufferGuard, ItemAction, SamplingResult};
 use relay_event_normalization::span::ai::extract_ai_measurements;
+use relay_statsd::metric;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -330,6 +331,7 @@ pub fn extract_from_event(
                 return;
             }
         };
+        metric!(histogram(RelayHistograms::SpanTagCount) = span.value()?.tags.value()?.len());
         let span = match span.to_json() {
             Ok(span) => span,
             Err(e) => {

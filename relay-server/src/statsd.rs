@@ -187,6 +187,9 @@ pub enum RelayHistograms {
     /// Measures how many transactions were created from segment spans in a single envelope.
     #[cfg(feature = "processing")]
     TransactionsFromSpansPerEnvelope,
+
+    /// The number of elements in 'tags' field of each span.
+    SpanTagCount,
 }
 
 impl HistogramMetric for RelayHistograms {
@@ -224,6 +227,7 @@ impl HistogramMetric for RelayHistograms {
             RelayHistograms::TransactionsFromSpansPerEnvelope => {
                 "transactions_from_spans_per_envelope"
             }
+            RelayHistograms::SpanTagCount => "spans.tag_count",
         }
     }
 }
