@@ -1,15 +1,15 @@
 use cookie::Cookie;
-use relay_protocol::{Annotated, Empty, Error, FromValue, IntoValue, Object, Value};
+use relay_protocol::{Annotated, CompactString, Empty, Error, FromValue, IntoValue, Object, Value};
 use url::form_urlencoded;
 
 use crate::processor::ProcessValue;
 use crate::protocol::{JsonLenientString, LenientString, PairList};
 
-type CookieEntry = Annotated<(Annotated<String>, Annotated<String>)>;
+type CookieEntry = Annotated<(Annotated<CompactString>, Annotated<CompactString>)>;
 
 /// A map holding cookies.
 #[derive(Clone, Debug, Default, PartialEq, Empty, IntoValue, ProcessValue)]
-pub struct Cookies(pub PairList<(Annotated<String>, Annotated<String>)>);
+pub struct Cookies(pub PairList<(Annotated<CompactString>, Annotated<CompactString>)>);
 
 impl Cookies {
     pub fn parse(string: &str) -> Result<Self, Error> {
@@ -27,8 +27,8 @@ impl Cookies {
     fn parse_cookie(string: &str) -> Result<CookieEntry, Error> {
         match Cookie::parse_encoded(string) {
             Ok(cookie) => Ok(Annotated::from((
-                cookie.name().to_string().into(),
-                cookie.value().to_string().into(),
+                Annotated::new(cookie.name().into()),
+                Annotated::new(cookie.value().into()),
             ))),
             Err(error) => Err(Error::invalid(error)),
         }
@@ -36,7 +36,7 @@ impl Cookies {
 }
 
 impl std::ops::Deref for Cookies {
-    type Target = PairList<(Annotated<String>, Annotated<String>)>;
+    type Target = PairList<(Annotated<CompactString>, Annotated<CompactString>)>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -84,13 +84,13 @@ impl FromValue for Cookies {
 /// A "into-string" type that normalizes header names.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Empty, IntoValue, ProcessValue)]
 #[metastructure(process_func = "process_header_name")]
-pub struct HeaderName(String);
+pub struct HeaderName(CompactString);
 
 impl HeaderName {
     /// Creates a normalized header name.
     pub fn new<S: AsRef<str>>(name: S) -> Self {
         let name = name.as_ref();
-        let mut normalized = String::with_capacity(name.len());
+        let mut normalized = CompactString::with_capacity(name.len());
 
         name.chars().fold(true, |uppercase, c| {
             if uppercase {
@@ -110,7 +110,7 @@ impl HeaderName {
     }
 
     /// Unwraps the inner raw string.
-    pub fn into_inner(self) -> String {
+    pub fn into_inner(self) -> CompactString {
         self.0
     }
 }
@@ -122,7 +122,7 @@ impl AsRef<str> for HeaderName {
 }
 
 impl std::ops::Deref for HeaderName {
-    type Target = String;
+    type Target = CompactString;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -135,8 +135,8 @@ impl std::ops::DerefMut for HeaderName {
     }
 }
 
-impl From<String> for HeaderName {
-    fn from(value: String) -> Self {
+impl From<CompactString> for HeaderName {
+    fn from(value: CompactString) -> Self {
         HeaderName::new(value)
     }
 }
@@ -149,17 +149,17 @@ impl From<&'_ str> for HeaderName {
 
 impl FromValue for HeaderName {
     fn from_value(value: Annotated<Value>) -> Annotated<Self> {
-        String::from_value(value).map_value(HeaderName::new)
+        CompactString::from_value(value).map_value(HeaderName::new)
     }
 }
 
 /// A "into-string" type that normalizes header values.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Empty, IntoValue, ProcessValue)]
-pub struct HeaderValue(String);
+pub struct HeaderValue(CompactString);
 
 impl HeaderValue {
     pub fn new<S: AsRef<str>>(value: S) -> Self {
-        HeaderValue(value.as_ref().to_owned())
+        HeaderValue(value.as_ref().into())
     }
 }
 
@@ -170,7 +170,7 @@ impl AsRef<str> for HeaderValue {
 }
 
 impl std::ops::Deref for HeaderValue {
-    type Target = String;
+    type Target = CompactString;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -276,7 +276,7 @@ impl FromValue for Headers {
 
 /// A map holding query string pairs.
 #[derive(Clone, Debug, Default, PartialEq, Empty, IntoValue, ProcessValue)]
-pub struct Query(pub PairList<(Annotated<String>, Annotated<JsonLenientString>)>);
+pub struct Query(pub PairList<(Annotated<CompactString>, Annotated<JsonLenientString>)>);
 
 impl Query {
     pub fn parse(mut string: &str) -> Self {
@@ -289,7 +289,7 @@ impl Query {
 }
 
 impl std::ops::Deref for Query {
-    type Target = PairList<(Annotated<String>, Annotated<JsonLenientString>)>;
+    type Target = PairList<(Annotated<CompactString>, Annotated<JsonLenientString>)>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -304,8 +304,8 @@ impl std::ops::DerefMut for Query {
 
 impl<K, V> FromIterator<(K, V)> for Query
 where
-    K: Into<String>,
-    V: Into<String>,
+    K: Into<CompactString>,
+    V: Into<CompactString>,
 {
     fn from_iter<T>(iter: T) -> Self
     where
@@ -498,20 +498,20 @@ mod tests {
 
         let headers = vec![
             Annotated::new((
-                Annotated::new("-Other-".to_string().into()),
-                Annotated::new("header".to_string().into()),
+                Annotated::new("-Other-".into()),
+                Annotated::new("header".into()),
             )),
             Annotated::new((
-                Annotated::new("Accept".to_string().into()),
-                Annotated::new("application/json".to_string().into()),
+                Annotated::new("Accept".into()),
+                Annotated::new("application/json".into()),
             )),
             Annotated::new((
-                Annotated::new("WWW-Authenticate".to_string().into()),
-                Annotated::new("basic".to_string().into()),
+                Annotated::new("WWW-Authenticate".into()),
+                Annotated::new("basic".into()),
             )),
             Annotated::new((
-                Annotated::new("X-Sentry".to_string().into()),
-                Annotated::new("version=8".to_string().into()),
+                Annotated::new("X-Sentry".into()),
+                Annotated::new("version=8".into()),
             )),
         ];
 
@@ -526,8 +526,8 @@ mod tests {
 ]"#;
 
         let headers = vec![Annotated::new((
-            Annotated::new("Accept".to_string().into()),
-            Annotated::new("application/json".to_string().into()),
+            Annotated::new("Accept".into()),
+            Annotated::new("application/json".into()),
         ))];
 
         let headers = Annotated::new(Headers(PairList(headers)));
@@ -656,27 +656,27 @@ mod tests {
             protocol: Annotated::empty(),
             data: {
                 let mut map = Object::new();
-                map.insert("some".to_string(), Annotated::new(Value::I64(1)));
+                map.insert("some".into(), Annotated::new(Value::I64(1)));
                 Annotated::new(Value::Object(map))
             },
             query_string: Annotated::new(Query(
                 vec![Annotated::new((
-                    Annotated::new("q".to_string()),
-                    Annotated::new("foo".to_string().into()),
+                    Annotated::new("q".into()),
+                    Annotated::new("foo".into()),
                 ))]
                 .into(),
             )),
             fragment: Annotated::new("home".to_string()),
             cookies: Annotated::new(Cookies({
                 PairList(vec![Annotated::new((
-                    Annotated::new("GOOGLE".to_string()),
-                    Annotated::new("1".to_string()),
+                    Annotated::new("GOOGLE".into()),
+                    Annotated::new("1".into()),
                 ))])
             })),
             headers: Annotated::new(Headers({
                 let headers = vec![Annotated::new((
-                    Annotated::new("Referer".to_string().into()),
-                    Annotated::new("https://google.com/".to_string().into()),
+                    Annotated::new("Referer".into()),
+                    Annotated::new("https://google.com/".into()),
                 ))];
                 PairList(headers)
             })),
@@ -684,8 +684,8 @@ mod tests {
             env: Annotated::new({
                 let mut map = Object::new();
                 map.insert(
-                    "REMOTE_ADDR".to_string(),
-                    Annotated::new(Value::String("213.47.147.207".to_string())),
+                    "REMOTE_ADDR".into(),
+                    Annotated::new(Value::String("213.47.147.207".into())),
                 );
                 map
             }),
@@ -694,8 +694,8 @@ mod tests {
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -709,8 +709,8 @@ mod tests {
     fn test_query_string() {
         let query = Annotated::new(Query(
             vec![Annotated::new((
-                Annotated::new("foo".to_string()),
-                Annotated::new("bar".to_string().into()),
+                Annotated::new("foo".into()),
+                Annotated::new("bar".into()),
             ))]
             .into(),
         ));
@@ -719,14 +719,8 @@ mod tests {
 
         let query = Annotated::new(Query(
             vec![
-                Annotated::new((
-                    Annotated::new("foo".to_string()),
-                    Annotated::new("bar".to_string().into()),
-                )),
-                Annotated::new((
-                    Annotated::new("baz".to_string()),
-                    Annotated::new("42".to_string().into()),
-                )),
+                Annotated::new((Annotated::new("foo".into()), Annotated::new("bar".into()))),
+                Annotated::new((Annotated::new("baz".into()), Annotated::new("42".into()))),
             ]
             .into(),
         ));
@@ -740,8 +734,8 @@ mod tests {
         // nested objects here but for legacy values we instead serialize it out as JSON.
         let query = Annotated::new(Query(
             vec![Annotated::new((
-                Annotated::new("foo".to_string()),
-                Annotated::new("bar".to_string().into()),
+                Annotated::new("foo".into()),
+                Annotated::new("bar".into()),
             ))]
             .into(),
         ));
@@ -750,13 +744,10 @@ mod tests {
         let query = Annotated::new(Query(
             vec![
                 Annotated::new((
-                    Annotated::new("baz".to_string()),
-                    Annotated::new(r#"{"a":42}"#.to_string().into()),
+                    Annotated::new("baz".into()),
+                    Annotated::new(r#"{"a":42}"#.into()),
                 )),
-                Annotated::new((
-                    Annotated::new("foo".to_string()),
-                    Annotated::new("bar".to_string().into()),
-                )),
+                Annotated::new((Annotated::new("foo".into()), Annotated::new("bar".into()))),
             ]
             .into(),
         ));
@@ -789,17 +780,14 @@ mod tests {
 
         let map = vec![
             Annotated::new((
-                Annotated::new("PHPSESSID".to_string()),
-                Annotated::new("298zf09hf012fh2".to_string()),
+                Annotated::new("PHPSESSID".into()),
+                Annotated::new("298zf09hf012fh2".into()),
             )),
             Annotated::new((
-                Annotated::new("csrftoken".to_string()),
-                Annotated::new("u32t4o3tb3gg43".to_string()),
+                Annotated::new("csrftoken".into()),
+                Annotated::new("u32t4o3tb3gg43".into()),
             )),
-            Annotated::new((
-                Annotated::new("_gat".to_string()),
-                Annotated::new("1".to_string()),
-            )),
+            Annotated::new((Annotated::new("_gat".into()), Annotated::new("1".into()))),
         ];
 
         let cookies = Annotated::new(Cookies(PairList(map)));
@@ -812,15 +800,12 @@ mod tests {
         let output = r#"{"cookies":[["foo","bar"],["invalid",null],["none",null]],"_meta":{"cookies":{"1":{"1":{"":{"err":[["invalid_data",{"reason":"expected a string"}]],"val":42}}}}}}"#;
 
         let map = vec![
+            Annotated::new((Annotated::new("foo".into()), Annotated::new("bar".into()))),
             Annotated::new((
-                Annotated::new("foo".to_string()),
-                Annotated::new("bar".to_string()),
-            )),
-            Annotated::new((
-                Annotated::new("invalid".to_string()),
+                Annotated::new("invalid".into()),
                 Annotated::from_error(Error::expected("a string"), Some(Value::I64(42))),
             )),
-            Annotated::new((Annotated::new("none".to_string()), Annotated::empty())),
+            Annotated::new((Annotated::new("none".into()), Annotated::empty())),
         ];
 
         let cookies = Annotated::new(Cookies(PairList(map)));
@@ -837,12 +822,9 @@ mod tests {
         let json = r#"{"foo":"bar", "invalid": 42}"#;
 
         let map = vec![
+            Annotated::new((Annotated::new("foo".into()), Annotated::new("bar".into()))),
             Annotated::new((
-                Annotated::new("foo".to_string()),
-                Annotated::new("bar".to_string()),
-            )),
-            Annotated::new((
-                Annotated::new("invalid".to_string()),
+                Annotated::new("invalid".into()),
                 Annotated::from_error(Error::expected("a string"), Some(Value::I64(42))),
             )),
         ];
@@ -864,14 +846,8 @@ mod tests {
 
         let query = Annotated::new(Query(
             vec![
-                Annotated::new((
-                    Annotated::new("foo".to_string()),
-                    Annotated::new("bar".to_string().into()),
-                )),
-                Annotated::new((
-                    Annotated::new("baz".to_string()),
-                    Annotated::new("".to_string().into()),
-                )),
+                Annotated::new((Annotated::new("foo".into()), Annotated::new("bar".into()))),
+                Annotated::new((Annotated::new("baz".into()), Annotated::new("".into()))),
             ]
             .into(),
         ));
@@ -903,14 +879,8 @@ mod tests {
 
         let request = Annotated::new(Request {
             headers: Annotated::new(Headers(PairList(vec![
-                Annotated::new((
-                    Annotated::new("X-Bar".to_string().into()),
-                    Annotated::new("42".to_string().into()),
-                )),
-                Annotated::new((
-                    Annotated::new("X-Foo".to_string().into()),
-                    Annotated::new("".to_string().into()),
-                )),
+                Annotated::new((Annotated::new("X-Bar".into()), Annotated::new("42".into()))),
+                Annotated::new((Annotated::new("X-Foo".into()), Annotated::new("".into()))),
             ]))),
             ..Default::default()
         });
@@ -948,13 +918,10 @@ mod tests {
         let request = Annotated::new(Request {
             headers: Annotated::new(Headers(PairList(vec![
                 Annotated::new((
-                    Annotated::new("X-Bar".to_string().into()),
-                    Annotated::new("42,bar,baz".to_string().into()),
+                    Annotated::new("X-Bar".into()),
+                    Annotated::new("42,bar,baz".into()),
                 )),
-                Annotated::new((
-                    Annotated::new("X-Foo".to_string().into()),
-                    Annotated::new("".to_string().into()),
-                )),
+                Annotated::new((Annotated::new("X-Foo".into()), Annotated::new("".into()))),
             ]))),
             ..Default::default()
         });

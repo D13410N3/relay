@@ -81,7 +81,6 @@ impl Getter for Exception {
 
 #[cfg(test)]
 mod tests {
-    use relay_protocol::Map;
     use similar_asserts::assert_eq;
 
     use super::*;
@@ -98,14 +97,14 @@ mod tests {
 }"#;
         let exception = Annotated::new(Exception {
             ty: Annotated::new("mytype".to_string()),
-            value: Annotated::new("myvalue".to_string().into()),
+            value: Annotated::new("myvalue".into()),
             module: Annotated::new("mymodule".to_string()),
             thread_id: Annotated::new(ThreadId::Int(42)),
             other: {
-                let mut map = Map::new();
+                let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -133,7 +132,7 @@ mod tests {
         let json = r#"{"type":"","value":""}"#;
         let exception = Annotated::new(Exception {
             ty: Annotated::new("".to_string()),
-            value: Annotated::new("".to_string().into()),
+            value: Annotated::new("".into()),
             ..Default::default()
         });
 
@@ -147,7 +146,7 @@ mod tests {
         let output = r#"{"value":"{\"unauthorized\":true}"}"#;
 
         let exception = Annotated::new(Exception {
-            value: Annotated::new(r#"{"unauthorized":true}"#.to_string().into()),
+            value: Annotated::new(r#"{"unauthorized":true}"#.into()),
             ..Default::default()
         });
 

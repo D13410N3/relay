@@ -192,7 +192,7 @@ fn normalize_os_context(os: &mut OsContext) {
             os.version = version.to_string().into();
             if os.build.is_empty() {
                 // Keep raw version as build
-                os.build.set_value(Some(build_number.to_string().into()));
+                os.build.set_value(Some(build_number.into()));
             }
         } else if let Some(captures) = OS_MACOS_REGEX.captures(raw_description) {
             os.name = "macOS".to_string().into();
@@ -200,30 +200,21 @@ fn normalize_os_context(os: &mut OsContext) {
                 .name("version")
                 .map(|m| m.as_str().to_string())
                 .into();
-            os.build = captures
-                .name("build")
-                .map(|m| m.as_str().to_string().into())
-                .into();
+            os.build = captures.name("build").map(|m| m.as_str().into()).into();
         } else if let Some(captures) = OS_IOS_REGEX.captures(raw_description) {
             os.name = "iOS".to_string().into();
             os.version = captures
                 .name("version")
                 .map(|m| m.as_str().to_string())
                 .into();
-            os.build = captures
-                .name("build")
-                .map(|m| m.as_str().to_string().into())
-                .into();
+            os.build = captures.name("build").map(|m| m.as_str().into()).into();
         } else if let Some(captures) = OS_IPADOS_REGEX.captures(raw_description) {
             os.name = "iPadOS".to_string().into();
             os.version = captures
                 .name("version")
                 .map(|m| m.as_str().to_string())
                 .into();
-            os.build = captures
-                .name("build")
-                .map(|m| m.as_str().to_string().into())
-                .into();
+            os.build = captures.name("build").map(|m| m.as_str().into()).into();
         } else if let Some(captures) = OS_LINUX_DISTRO_UNAME_REGEX.captures(raw_description) {
             os.name = captures.name("name").map(|m| m.as_str().to_string()).into();
             os.version = captures
@@ -324,7 +315,7 @@ pub fn normalize_context(context: &mut Context) {
 
 #[cfg(test)]
 mod tests {
-    use relay_event_schema::protocol::{Headers, LenientString, PairList};
+    use relay_event_schema::protocol::{Headers, PairList};
     use relay_protocol::Object;
     use similar_asserts::assert_eq;
 
@@ -363,7 +354,7 @@ mod tests {
     fn test_dotnet_framework_472() {
         let mut runtime = RuntimeContext {
             raw_description: ".NET Framework 4.7.3056.0".to_string().into(),
-            build: LenientString("461814".to_string()).into(),
+            build: Annotated::new("461814".into()),
             ..RuntimeContext::default()
         };
 
@@ -376,7 +367,7 @@ mod tests {
     fn test_dotnet_framework_future_version() {
         let mut runtime = RuntimeContext {
             raw_description: ".NET Framework 200.0".to_string().into(),
-            build: LenientString("999999".to_string()).into(),
+            build: Annotated::new("999999".into()),
             ..RuntimeContext::default()
         };
 
@@ -673,7 +664,7 @@ mod tests {
         normalize_os_context(&mut os);
         assert_eq!(Some("Windows"), os.name.as_str());
         assert_eq!(Some("10"), os.version.as_str());
-        assert_eq!(Some(&LenientString("19042".to_string())), os.build.value());
+        assert_eq!(Some(&"19042".into()), os.build.value());
     }
 
     #[test]
@@ -726,15 +717,12 @@ mod tests {
     #[test]
     fn test_infer_json() {
         let mut response = ResponseContext {
-            data: Annotated::from(Value::String(r#"{"foo":"bar"}"#.to_string())),
+            data: Annotated::from(Value::String(r#"{"foo":"bar"}"#.into())),
             ..ResponseContext::default()
         };
 
         let mut expected_value = Object::new();
-        expected_value.insert(
-            "foo".to_string(),
-            Annotated::from(Value::String("bar".into())),
-        );
+        expected_value.insert("foo".into(), Annotated::from(Value::String("bar".into())));
 
         normalize_response(&mut response);
         assert_eq!(
@@ -747,10 +735,10 @@ mod tests {
     #[test]
     fn test_broken_json_with_fallback() {
         let mut response = ResponseContext {
-            data: Annotated::from(Value::String(r#"{"foo":"b"#.to_string())),
+            data: Annotated::from(Value::String(r#"{"foo":"b"#.into())),
             headers: Annotated::from(Headers(PairList(vec![Annotated::new((
-                Annotated::new("Content-Type".to_string().into()),
-                Annotated::new("text/plain; encoding=utf-8".to_string().into()),
+                Annotated::new("Content-Type".into()),
+                Annotated::new("text/plain; encoding=utf-8".into()),
             ))]))),
             ..ResponseContext::default()
         };
@@ -763,7 +751,7 @@ mod tests {
     #[test]
     fn test_broken_json_without_fallback() {
         let mut response = ResponseContext {
-            data: Annotated::from(Value::String(r#"{"foo":"b"#.to_string())),
+            data: Annotated::from(Value::String(r#"{"foo":"b"#.into())),
             ..ResponseContext::default()
         };
 

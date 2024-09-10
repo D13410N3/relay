@@ -95,7 +95,7 @@ mod tests {
     use similar_asserts::assert_eq;
 
     use super::*;
-    use relay_protocol::{Error, Map};
+    use relay_protocol::Error;
 
     #[test]
     fn test_geo_roundtrip() {
@@ -112,10 +112,10 @@ mod tests {
             subdivision: Annotated::new("California".to_string()),
             region: Annotated::new("CA".to_string()),
             other: {
-                let mut map = Map::new();
+                let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -155,26 +155,23 @@ mod tests {
   "other": "value"
 }"#;
         let user = Annotated::new(User {
-            id: Annotated::new("e4e24881-8238-4539-a32b-d3c3ecd40568".to_string().into()),
+            id: Annotated::new("e4e24881-8238-4539-a32b-d3c3ecd40568".into()),
             email: Annotated::new("mail@example.org".to_string()),
             ip_address: Annotated::new(IpAddr::auto()),
             name: Annotated::new("John Doe".to_string()),
-            username: Annotated::new(LenientString("john_doe".to_owned())),
+            username: Annotated::new("john_doe".into()),
             geo: Annotated::empty(),
             segment: Annotated::new("vip".to_string()),
             data: {
                 let mut map = Object::new();
-                map.insert(
-                    "data".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
-                );
+                map.insert("data".into(), Annotated::new(Value::String("value".into())));
                 Annotated::new(map)
             },
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -190,7 +187,7 @@ mod tests {
         let input = r#"{"id":42}"#;
         let output = r#"{"id":"42"}"#;
         let user = Annotated::new(User {
-            id: Annotated::new("42".to_string().into()),
+            id: Annotated::new("42".into()),
             ..User::default()
         });
 
@@ -203,7 +200,7 @@ mod tests {
         let input = r#"{"username":42}"#;
         let output = r#"{"username":"42"}"#;
         let user = Annotated::new(User {
-            username: Annotated::new("42".to_string().into()),
+            username: Annotated::new("42".into()),
             ..User::default()
         });
 

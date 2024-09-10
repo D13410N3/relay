@@ -435,13 +435,13 @@ mod tests {
                 Uuid::parse_str("52df9022835246eeb317dbd739ccd059").unwrap(),
             )]),
             platform: Annotated::new("myplatform".to_string()),
-            release: Annotated::new("myrelease".to_string().into()),
+            release: Annotated::new("myrelease".into()),
             dist: Annotated::new("mydist".to_string()),
             environment: Annotated::new("myenv".to_string()),
             tags: {
                 let items = vec![Annotated::new(TagEntry(
-                    Annotated::new("tag".to_string()),
-                    Annotated::new("value".to_string()),
+                    Annotated::new("tag".into()),
+                    Annotated::new("value".into()),
                 ))];
                 Annotated::new(Tags(items.into()))
             },
@@ -456,7 +456,7 @@ mod tests {
         let input = r#"{"release":42}"#;
         let output = r#"{"release":"42"}"#;
         let event = Annotated::new(Replay {
-            release: Annotated::new("42".to_string().into()),
+            release: Annotated::new("42".into()),
             ..Default::default()
         });
 

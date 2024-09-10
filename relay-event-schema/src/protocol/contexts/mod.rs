@@ -33,7 +33,7 @@ pub use runtime::*;
 pub use trace::*;
 pub use user_report_v2::*;
 
-use relay_protocol::{Annotated, Empty, FromValue, IntoValue, Object, Value};
+use relay_protocol::{Annotated, CompactString, Empty, FromValue, IntoValue, Object, Value};
 
 use crate::processor::ProcessValue;
 
@@ -129,14 +129,14 @@ impl Contexts {
     where
         C: DefaultContext,
     {
-        self.insert(C::default_key().to_owned(), context.into_context());
+        self.insert(C::default_key().into(), context.into_context());
     }
 
     /// Inserts a context under a custom given key.
     ///
     /// By convention, every typed context has a default key. Use [`add`](Self::add) to insert such
     /// contexts, instead.
-    pub fn insert(&mut self, key: String, context: Context) {
+    pub fn insert(&mut self, key: CompactString, context: Context) {
         self.0.insert(key, Annotated::new(ContextInner(context)));
     }
 
@@ -179,7 +179,7 @@ impl Contexts {
     pub fn get_or_insert_with<F, S>(&mut self, key: S, context_builder: F) -> &mut Context
     where
         F: FnOnce() -> Context,
-        S: Into<String>,
+        S: Into<CompactString>,
     {
         &mut self
             .0
@@ -259,10 +259,7 @@ impl FromValue for Contexts {
             for (key, value) in items.iter_mut() {
                 if let Annotated(Some(Value::Object(ref mut items)), _) = value {
                     if !items.contains_key("type") {
-                        items.insert(
-                            "type".to_string(),
-                            Annotated::new(Value::String(key.to_string())),
-                        );
+                        items.insert("type".into(), Annotated::new(Value::String(key.clone())));
                     }
                 }
             }
@@ -302,7 +299,7 @@ pub trait DefaultContext: Default {
 
 #[cfg(test)]
 mod tests {
-    use relay_protocol::{Map, Meta};
+    use relay_protocol::Meta;
 
     use super::*;
     use crate::processor::{ProcessingResult, ProcessingState, Processor};
@@ -312,14 +309,14 @@ mod tests {
     fn test_other_context_roundtrip() {
         let json = r#"{"other":"value","type":"mytype"}"#;
         let context = Annotated::new(Context::Other({
-            let mut map = Map::new();
+            let mut map = Object::new();
             map.insert(
-                "other".to_string(),
-                Annotated::new(Value::String("value".to_string())),
+                "other".into(),
+                Annotated::new(Value::String("value".into())),
             );
             map.insert(
-                "type".to_string(),
-                Annotated::new(Value::String("mytype".to_string())),
+                "type".into(),
+                Annotated::new(Value::String("mytype".into())),
             );
             map
         }));

@@ -228,7 +228,7 @@ impl FromValue for SpanStatus {
 
 impl IntoValue for SpanStatus {
     fn into_value(self) -> Value {
-        Value::String(self.to_string())
+        Value::String(self.as_str().into())
     }
 
     fn serialize_payload<S>(&self, s: S, _behavior: SkipSerialization) -> Result<S::Ok, S::Error>

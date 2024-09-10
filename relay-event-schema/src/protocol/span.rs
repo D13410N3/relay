@@ -470,13 +470,13 @@ impl Getter for SpanData {
                 let mut path = escaped.split('.').map(|s| s.replace('\0', "."));
                 let root = path.next()?;
 
-                let mut val = self.other.get(&root)?.value()?;
+                let mut val = self.other.get(root.as_str())?.value()?;
                 for part in path {
                     // While there is path segments left, `val` has to be an Object.
                     let relay_protocol::Value::Object(map) = val else {
                         return None;
                     };
-                    val = map.get(&part)?.value()?;
+                    val = map.get(part.as_str())?.value()?;
                 }
                 val.into()
             }
@@ -518,7 +518,7 @@ impl FromValue for Route {
         match value {
             Annotated(Some(Value::String(name)), meta) => Annotated(
                 Some(Route {
-                    name: Annotated::new(name),
+                    name: Annotated::new(name.into()),
                     ..Default::default()
                 }),
                 meta,
@@ -526,7 +526,7 @@ impl FromValue for Route {
             Annotated(Some(Value::Object(mut values)), meta) => {
                 let mut route: Route = Default::default();
                 if let Some(Annotated(Some(Value::String(name)), _)) = values.remove("name") {
-                    route.name = Annotated::new(name);
+                    route.name = Annotated::new(name.into());
                 }
                 if let Some(Annotated(Some(Value::Object(params)), _)) = values.remove("params") {
                     route.params = Annotated::new(params);

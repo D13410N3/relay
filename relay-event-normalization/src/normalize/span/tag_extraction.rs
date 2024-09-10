@@ -13,7 +13,7 @@ use relay_event_schema::protocol::{
     AppContext, BrowserContext, Event, Measurement, Measurements, OsContext, ProfileContext, Span,
     Timestamp, TraceContext,
 };
-use relay_protocol::{Annotated, Empty, Value};
+use relay_protocol::{Annotated, CompactString, Empty, Value};
 use sqlparser::ast::Visit;
 use sqlparser::ast::{ObjectName, Visitor};
 use url::Url;
@@ -247,7 +247,7 @@ pub fn extract_span_tags(
                 .clone()
                 .into_iter()
                 .chain(tags)
-                .map(|(k, v)| (k.sentry_tag_key().to_owned(), Annotated::new(v)))
+                .map(|(k, v)| (k.sentry_tag_key().into(), Annotated::new(v)))
                 .collect(),
         );
 
@@ -414,7 +414,7 @@ fn extract_shared_tags(event: &Event) -> BTreeMap<SpanTagKey, String> {
 }
 
 /// Extracts measurements that should only be saved on segment spans.
-fn extract_segment_measurements(event: &Event) -> BTreeMap<String, Measurement> {
+fn extract_segment_measurements(event: &Event) -> BTreeMap<CompactString, Measurement> {
     let mut measurements = BTreeMap::new();
 
     if let Some(trace_context) = event.context::<TraceContext>() {
@@ -924,7 +924,7 @@ pub fn extract_measurements(span: &mut Span, is_mobile: bool) {
             if let Some(value) = value_to_f64(data.cache_item_size.value()) {
                 let measurements = span.measurements.get_or_insert_with(Default::default);
                 measurements.insert(
-                    "cache.item_size".to_owned(),
+                    "cache.item_size".into(),
                     Measurement {
                         value: value.into(),
                         unit: MetricUnit::Information(InformationUnit::Byte).into(),
@@ -1883,12 +1883,12 @@ LIMIT 1
         assert_eq!(tags_2.get("cache.hit").unwrap().as_str(), Some("false"));
         assert_eq!(tags_3.get("cache.hit").unwrap().as_str(), Some("false"));
 
-        let keys_1 = Value::Array(vec![Annotated::new(Value::String("my_key".to_string()))]);
+        let keys_1 = Value::Array(vec![Annotated::new(Value::String("my_key".into()))]);
         let keys_2 = Value::Array(vec![
-            Annotated::new(Value::String("my_key".to_string())),
-            Annotated::new(Value::String("my_key_2".to_string())),
+            Annotated::new(Value::String("my_key".into())),
+            Annotated::new(Value::String("my_key_2".into())),
         ]);
-        let keys_3 = Value::Array(vec![Annotated::new(Value::String("my_key_2".to_string()))]);
+        let keys_3 = Value::Array(vec![Annotated::new(Value::String("my_key_2".into()))]);
         assert_eq!(
             tags_1.get("cache.key").unwrap().as_str(),
             serde_json::to_string(&keys_1).ok().as_deref()

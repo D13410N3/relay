@@ -123,8 +123,7 @@ impl FromValue for LogEntry {
             Annotated(Some(Value::Bool(false)), _) => Annotated(None, Meta::default()),
             x => Annotated::new(LogEntry {
                 formatted: JsonLenientString::from_value(x)
-                    .map_value(JsonLenientString::into_inner)
-                    .map_value(Message),
+                    .map_value(|s| Message(s.into_inner().into_string())),
                 ..Default::default()
             }),
         }
@@ -152,14 +151,14 @@ mod tests {
             message: Annotated::new("Hello, %s %s!".to_string().into()),
             formatted: Annotated::empty(),
             params: Annotated::new(Value::Array(vec![
-                Annotated::new(Value::String("World".to_string())),
+                Annotated::new(Value::String("World".into())),
                 Annotated::new(Value::I64(1)),
             ])),
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -210,10 +209,7 @@ mod tests {
             message: Annotated::new("Hello, %s!".to_string().into()),
             params: Annotated::new(Value::Object({
                 let mut object = Object::new();
-                object.insert(
-                    "name".to_string(),
-                    Annotated::new(Value::String("World".to_string())),
-                );
+                object.insert("name".into(), Annotated::new(Value::String("World".into())));
                 object
             })),
             ..LogEntry::default()

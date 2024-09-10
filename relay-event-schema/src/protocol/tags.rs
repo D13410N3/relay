@@ -1,17 +1,17 @@
-use relay_protocol::{Annotated, Array, Empty, FromValue, IntoValue, Object, Value};
+use relay_protocol::{Annotated, Array, CompactString, Empty, FromValue, IntoValue, Object, Value};
 
 use crate::processor::ProcessValue;
 use crate::protocol::{AsPair, JsonLenientString, LenientString, PairList};
 
 #[derive(Clone, Debug, Default, PartialEq, Empty, IntoValue, ProcessValue)]
 pub struct TagEntry(
-    #[metastructure(max_chars = 200, allow_chars = "a-zA-Z0-9_.:-")] pub Annotated<String>,
-    #[metastructure(max_chars = 200, deny_chars = "\n")] pub Annotated<String>,
+    #[metastructure(max_chars = 200, allow_chars = "a-zA-Z0-9_.:-")] pub Annotated<CompactString>,
+    #[metastructure(max_chars = 200, deny_chars = "\n")] pub Annotated<CompactString>,
 );
 
 impl AsPair for TagEntry {
-    type Key = String;
-    type Value = String;
+    type Key = CompactString;
+    type Value = CompactString;
 
     fn from_pair(pair: (Annotated<Self::Key>, Annotated<Self::Value>)) -> Self {
         TagEntry(pair.0, pair.1)
@@ -35,8 +35,8 @@ impl FromValue for TagEntry {
         type TagTuple = (Annotated<LenientString>, Annotated<LenientString>);
         TagTuple::from_value(value).map_value(|(key, value)| {
             TagEntry(
-                key.map_value(|x| x.into_inner().replace(' ', "-").trim().to_string()),
-                value.map_value(|x| x.into_inner().trim().to_string()),
+                key.map_value(|x| x.into_inner().replace(' ', "-").trim().into()),
+                value.map_value(|x| x.into_inner().trim().into()),
             )
         })
     }
@@ -54,7 +54,7 @@ impl Tags {
     ///
     /// To retrieve the [`Annotated`] wrapper of the tag value, use [`PairList::get`] instead.
     pub fn get(&self, key: &str) -> Option<&str> {
-        self.0.get_value(key).map(String::as_str)
+        self.0.get_value(key).map(CompactString::as_str)
     }
 }
 
@@ -72,7 +72,7 @@ impl std::ops::DerefMut for Tags {
     }
 }
 
-impl<T: Into<String>> From<Object<T>> for Tags {
+impl<T: Into<CompactString>> From<Object<T>> for Tags {
     fn from(value: Object<T>) -> Self {
         Self(PairList(
             value
@@ -91,7 +91,7 @@ impl From<Tags> for Object<JsonLenientString> {
              .0
             .into_iter()
             .flat_map(Annotated::into_value)
-            .flat_map(|p| Some((p.0.into_value()?, p.1.map_value(Into::into))))
+            .flat_map(|p| Some((p.0.into_value()?, p.1.map_value(JsonLenientString))))
             .collect()
     }
 }
@@ -114,25 +114,22 @@ mod tests {
 }"#;
 
         let arr = vec![
+            Annotated::new(TagEntry(Annotated::new("bam".into()), Annotated::empty())),
             Annotated::new(TagEntry(
-                Annotated::new("bam".to_string()),
-                Annotated::empty(),
+                Annotated::new("blah".into()),
+                Annotated::new("blub".into()),
             )),
             Annotated::new(TagEntry(
-                Annotated::new("blah".to_string()),
-                Annotated::new("blub".to_string()),
+                Annotated::new("bool".into()),
+                Annotated::new("True".into()),
             )),
             Annotated::new(TagEntry(
-                Annotated::new("bool".to_string()),
-                Annotated::new("True".to_string()),
+                Annotated::new("foo-bar".into()),
+                Annotated::new("baz".into()),
             )),
             Annotated::new(TagEntry(
-                Annotated::new("foo-bar".to_string()),
-                Annotated::new("baz".to_string()),
-            )),
-            Annotated::new(TagEntry(
-                Annotated::new("non-string".to_string()),
-                Annotated::new("42".to_string()),
+                Annotated::new("non-string".into()),
+                Annotated::new("42".into()),
             )),
         ];
         let tags = Annotated::new(Tags(arr.into()));
@@ -193,25 +190,22 @@ mod tests {
 
         let arr = vec![
             Annotated::new(TagEntry(
-                Annotated::new("bool".to_string()),
-                Annotated::new("True".to_string()),
+                Annotated::new("bool".into()),
+                Annotated::new("True".into()),
             )),
             Annotated::new(TagEntry(
-                Annotated::new("foo-bar".to_string()),
-                Annotated::new("baz".to_string()),
+                Annotated::new("foo-bar".into()),
+                Annotated::new("baz".into()),
             )),
             Annotated::new(TagEntry(
-                Annotated::new("23".to_string()),
-                Annotated::new("42".to_string()),
+                Annotated::new("23".into()),
+                Annotated::new("42".into()),
             )),
             Annotated::new(TagEntry(
-                Annotated::new("blah".to_string()),
-                Annotated::new("blub".to_string()),
+                Annotated::new("blah".into()),
+                Annotated::new("blub".into()),
             )),
-            Annotated::new(TagEntry(
-                Annotated::new("bam".to_string()),
-                Annotated::empty(),
-            )),
+            Annotated::new(TagEntry(Annotated::new("bam".into()), Annotated::empty())),
         ];
 
         let tags = Annotated::new(Tags(arr.into()));

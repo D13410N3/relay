@@ -123,7 +123,6 @@ pub struct Breadcrumb {
 
 #[cfg(test)]
 mod tests {
-    use relay_protocol::Map;
     use similar_asserts::assert_eq;
 
     use super::*;
@@ -163,20 +162,14 @@ mod tests {
             level: Annotated::new(Level::Fatal),
             message: Annotated::new("my message".to_string()),
             data: {
-                let mut map = Map::new();
-                map.insert(
-                    "a".to_string(),
-                    Annotated::new(Value::String("b".to_string())),
-                );
+                let mut map = Object::new();
+                map.insert("a".into(), Annotated::new(Value::String("b".into())));
                 Annotated::new(map)
             },
             event_id: Annotated::new("52df9022835246eeb317dbd739ccd059".parse().unwrap()),
             other: {
-                let mut map = Map::new();
-                map.insert(
-                    "c".to_string(),
-                    Annotated::new(Value::String("d".to_string())),
-                );
+                let mut map = Object::new();
+                map.insert("c".into(), Annotated::new(Value::String("d".into())));
                 map
             },
         });

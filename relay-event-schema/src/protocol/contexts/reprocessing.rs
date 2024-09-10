@@ -71,8 +71,8 @@ mod tests {
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "random".to_string(),
-                    Annotated::new(Value::String("stuff".to_string())),
+                    "random".into(),
+                    Annotated::new(Value::String("stuff".into())),
                 );
                 map
             },

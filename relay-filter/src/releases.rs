@@ -23,14 +23,14 @@ where
 #[cfg(test)]
 mod tests {
     use relay_common::glob3::GlobPatterns;
-    use relay_event_schema::protocol::{Event, LenientString, Span, SpanData};
+    use relay_event_schema::protocol::{Event, Span, SpanData};
     use relay_protocol::Annotated;
 
     use super::*;
 
     fn get_event_for_release(release: &str) -> Event {
         Event {
-            release: Annotated::from(LenientString::from(release.to_string())),
+            release: Annotated::new(release.into()),
             ..Event::default()
         }
     }
@@ -38,7 +38,7 @@ mod tests {
     fn get_span_for_release(release: &str) -> Span {
         Span {
             data: Annotated::new(SpanData {
-                release: Annotated::from(LenientString::from(release.to_string())),
+                release: Annotated::new(release.into()),
                 ..Default::default()
             }),
             ..Default::default()

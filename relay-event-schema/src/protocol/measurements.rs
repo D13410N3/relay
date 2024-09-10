@@ -1,7 +1,7 @@
 use std::ops::{Deref, DerefMut};
 
 use relay_base_schema::metrics::MetricUnit;
-use relay_protocol::{Annotated, Empty, Error, FromValue, IntoValue, Object, Value};
+use relay_protocol::{Annotated, CompactString, Empty, Error, FromValue, IntoValue, Object, Value};
 
 use crate::processor::ProcessValue;
 
@@ -52,7 +52,9 @@ impl FromValue for Measurements {
                             "measurement name '{name}' cannot be empty"
                         )));
                     } else if is_valid_measurement_name(name) {
-                        return Some((name.to_lowercase(), object));
+                        let mut name = CompactString::new(name);
+                        name.make_ascii_lowercase();
+                        return Some((name, object));
                     } else {
                         processing_errors.push(Error::invalid(format!(
                             "measurement name '{name}' can contain only characters a-z0-9._"
@@ -198,35 +200,35 @@ mod tests {
         let mut measurements = Annotated::new(Measurements({
             let mut measurements = Object::new();
             measurements.insert(
-                "cls".to_owned(),
+                "cls".into(),
                 Annotated::new(Measurement {
                     value: Annotated::empty(),
                     unit: Annotated::empty(),
                 }),
             );
             measurements.insert(
-                "lcp".to_owned(),
+                "lcp".into(),
                 Annotated::new(Measurement {
                     value: Annotated::new(420.69),
                     unit: Annotated::new(MetricUnit::Duration(DurationUnit::MilliSecond)),
                 }),
             );
             measurements.insert(
-                "fid".to_owned(),
+                "fid".into(),
                 Annotated::new(Measurement {
                     value: Annotated::new(2020f64),
                     unit: Annotated::empty(),
                 }),
             );
             measurements.insert(
-                "inp".to_owned(),
+                "inp".into(),
                 Annotated::new(Measurement {
                     value: Annotated::new(100.14),
                     unit: Annotated::empty(),
                 }),
             );
             measurements.insert(
-                "fp".to_owned(),
+                "fp".into(),
                 Annotated::new(Measurement {
                     value: Annotated::from_error(
                         Error::expected("a floating point number"),
@@ -237,7 +239,7 @@ mod tests {
             );
 
             measurements.insert(
-                "missing_value".to_owned(),
+                "missing_value".into(),
                 Annotated::from_error(Error::expected("measurement"), Some("string".into())),
             );
 

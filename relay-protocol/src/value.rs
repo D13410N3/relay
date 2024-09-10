@@ -16,7 +16,9 @@ pub type Array<T> = Vec<Annotated<T>>;
 pub type Map<K, T> = BTreeMap<K, T>;
 
 /// Alias for typed objects.
-pub type Object<T> = Map<String, Annotated<T>>;
+pub type Object<T> = Map<CompactString, Annotated<T>>;
+
+pub use compact_str::{format_compact, CompactString, ToCompactString, ToCompactStringError};
 
 /// Represents a boxed value.
 #[derive(Debug, Clone, PartialEq)]
@@ -30,7 +32,7 @@ pub enum Value {
     /// A floating point value.
     F64(f64),
     /// A string value.
-    String(String),
+    String(CompactString),
     /// An array of annotated values.
     Array(Array<Value>),
     /// A mapping of strings to annotated values.
@@ -87,14 +89,14 @@ impl Value {
                     unreachable!()
                 }
             }
-            serde_json::Value::String(val) => Value::String(val),
+            serde_json::Value::String(val) => Value::String(val.into()),
             serde_json::Value::Array(items) => {
                 Value::Array(items.into_iter().map(Annotated::<Value>::from).collect())
             }
             serde_json::Value::Object(items) => Value::Object(
                 items
                     .into_iter()
-                    .map(|(k, v)| (k, Annotated::<Value>::from(v)))
+                    .map(|(k, v)| (k.into(), Annotated::<Value>::from(v)))
                     .collect(),
             ),
         })
@@ -167,14 +169,14 @@ impl From<Value> for serde_json::Value {
             Value::F64(value) => serde_json::Number::from_f64(value)
                 .map(serde_json::Value::Number)
                 .unwrap_or(serde_json::Value::Null),
-            Value::String(val) => serde_json::Value::String(val),
+            Value::String(val) => serde_json::Value::String(val.into()),
             Value::Array(items) => {
                 serde_json::Value::Array(items.into_iter().map(serde_json::Value::from).collect())
             }
             Value::Object(items) => serde_json::Value::Object(
                 items
                     .into_iter()
-                    .map(|(k, v)| (k, serde_json::Value::from(v)))
+                    .map(|(k, v)| (k.into(), serde_json::Value::from(v)))
                     .collect(),
             ),
         }
@@ -216,12 +218,18 @@ impl From<f64> for Value {
 
 impl<'a> From<&'a str> for Value {
     fn from(value: &'a str) -> Self {
-        Value::String(value.to_string())
+        Value::String(value.into())
     }
 }
 
 impl From<String> for Value {
     fn from(value: String) -> Self {
+        Value::String(value.into())
+    }
+}
+
+impl From<CompactString> for Value {
+    fn from(value: CompactString) -> Self {
         Value::String(value)
     }
 }
@@ -283,12 +291,12 @@ impl<'de> Deserialize<'de> for Value {
             where
                 E: serde::de::Error,
             {
-                self.visit_string(String::from(value))
+                Ok(Value::String(value.into()))
             }
 
             #[inline]
             fn visit_string<E>(self, value: String) -> Result<Value, E> {
-                Ok(Value::String(value))
+                Ok(Value::String(value.into()))
             }
 
             #[inline]

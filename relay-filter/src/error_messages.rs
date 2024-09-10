@@ -58,7 +58,7 @@ pub fn should_filter<F: Filterable>(
 
 #[cfg(test)]
 mod tests {
-    use relay_event_schema::protocol::{Event, Exception, LogEntry, Values};
+    use relay_event_schema::protocol::{Event, Exception, JsonLenientString, LogEntry, Values};
     use relay_protocol::Annotated;
 
     use super::*;
@@ -153,7 +153,7 @@ mod tests {
                 let event = Event {
                     exceptions: Annotated::new(Values::new(vec![Annotated::new(Exception {
                         ty: Annotated::from(exc_type.map(str::to_string)),
-                        value: Annotated::from(exc_value.map(str::to_owned).map(From::from)),
+                        value: Annotated::from(exc_value.map(JsonLenientString::from)),
                         ..Default::default()
                     })])),
                     logentry: Annotated::new(LogEntry {

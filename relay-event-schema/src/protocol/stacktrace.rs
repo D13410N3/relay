@@ -4,7 +4,8 @@ use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
 
 use relay_protocol::{
-    Annotated, Array, Empty, ErrorKind, FromValue, IntoValue, Object, SkipSerialization, Value,
+    Annotated, Array, CompactString, Empty, ErrorKind, FromValue, IntoValue, Object,
+    SkipSerialization, ToCompactString, Value,
 };
 use serde::{Deserialize, Serialize};
 
@@ -244,7 +245,7 @@ impl FromValue for FrameVars {
                     value
                         .into_iter()
                         .enumerate()
-                        .map(|(i, v)| (i.to_string(), v))
+                        .map(|(i, v)| (i.to_compact_string(), v))
                         .collect(),
                 )
             } else {
@@ -394,7 +395,20 @@ pub enum InstructionAddrAdjustment {
     /// Any other unknown adjustment strategy.
     ///
     /// This exists to ensure forward compatibility.
-    Unknown(String),
+    Unknown(CompactString),
+}
+
+impl InstructionAddrAdjustment {
+    /// Returns the string representation of this adjustment.
+    pub fn as_str(&self) -> &str {
+        match self {
+            InstructionAddrAdjustment::Auto => "auto",
+            InstructionAddrAdjustment::AllButFirst => "all_but_first",
+            InstructionAddrAdjustment::All => "all",
+            InstructionAddrAdjustment::None => "none",
+            InstructionAddrAdjustment::Unknown(s) => s,
+        }
+    }
 }
 
 impl FromStr for InstructionAddrAdjustment {
@@ -406,21 +420,14 @@ impl FromStr for InstructionAddrAdjustment {
             "all_but_first" => Ok(Self::AllButFirst),
             "all" => Ok(Self::All),
             "none" => Ok(Self::None),
-            s => Ok(Self::Unknown(s.to_string())),
+            s => Ok(Self::Unknown(s.into())),
         }
     }
 }
 
 impl fmt::Display for InstructionAddrAdjustment {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            InstructionAddrAdjustment::Auto => "auto",
-            InstructionAddrAdjustment::AllButFirst => "all_but_first",
-            InstructionAddrAdjustment::All => "all",
-            InstructionAddrAdjustment::None => "none",
-            InstructionAddrAdjustment::Unknown(s) => s,
-        };
-        f.write_str(s)
+        f.write_str(self.as_str())
     }
 }
 
@@ -439,7 +446,7 @@ impl Empty for InstructionAddrAdjustment {
 
 impl FromValue for InstructionAddrAdjustment {
     fn from_value(value: Annotated<Value>) -> Annotated<Self> {
-        match String::from_value(value) {
+        match CompactString::from_value(value) {
             Annotated(Some(value), mut meta) => match value.parse() {
                 Ok(adjustment) => Annotated(Some(adjustment), meta),
                 Err(_) => {
@@ -458,7 +465,10 @@ impl IntoValue for InstructionAddrAdjustment {
     where
         Self: Sized,
     {
-        Value::String(self.to_string())
+        Value::String(match self {
+            Self::Unknown(s) => s,
+            _ => self.as_str().into(),
+        })
     }
 
     fn serialize_payload<S>(&self, s: S, _behavior: SkipSerialization) -> Result<S::Ok, S::Error>
@@ -466,7 +476,7 @@ impl IntoValue for InstructionAddrAdjustment {
         Self: Sized,
         S: serde::Serializer,
     {
-        serde::Serialize::serialize(&self.to_string(), s)
+        serde::Serialize::serialize(self.as_str(), s)
     }
 }
 
@@ -570,8 +580,8 @@ mod tests {
             vars: {
                 let mut vars = Object::new();
                 vars.insert(
-                    "variable".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "variable".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 Annotated::new(vars.into())
             },
@@ -598,8 +608,8 @@ mod tests {
             other: {
                 let mut vars = Object::new();
                 vars.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 vars
             },
@@ -644,10 +654,10 @@ mod tests {
             })]),
             registers: {
                 let mut registers = Object::new();
-                registers.insert("cspr".to_string(), Annotated::new(RegVal(0x2000_0000)));
-                registers.insert("lr".to_string(), Annotated::new(RegVal(0x1_8a31_aadc)));
-                registers.insert("pc".to_string(), Annotated::new(RegVal(0x1_8a31_0ea4)));
-                registers.insert("sp".to_string(), Annotated::new(RegVal(0x1_6fd7_5060)));
+                registers.insert("cspr".into(), Annotated::new(RegVal(0x2000_0000)));
+                registers.insert("lr".into(), Annotated::new(RegVal(0x1_8a31_aadc)));
+                registers.insert("pc".into(), Annotated::new(RegVal(0x1_8a31_0ea4)));
+                registers.insert("sp".into(), Annotated::new(RegVal(0x1_6fd7_5060)));
                 Annotated::new(registers)
             },
             instruction_addr_adjustment: Annotated::new(InstructionAddrAdjustment::AllButFirst),
@@ -656,8 +666,8 @@ mod tests {
             other: {
                 let mut other = Object::new();
                 other.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 other
             },
@@ -695,7 +705,7 @@ mod tests {
         let frame = Annotated::new(Frame {
             vars: Annotated::new({
                 let mut vars = Object::new();
-                vars.insert("despacito".to_string(), Annotated::empty());
+                vars.insert("despacito".into(), Annotated::empty());
                 vars.into()
             }),
             ..Default::default()
@@ -716,8 +726,8 @@ mod tests {
         let frame = Annotated::new(Frame {
             vars: Annotated::new({
                 let mut vars = Object::new();
-                vars.insert("despacito".to_string(), Annotated::empty());
-                vars.insert("despacito2".to_string(), Annotated::empty());
+                vars.insert("despacito".into(), Annotated::empty());
+                vars.insert("despacito2".into(), Annotated::empty());
                 vars.into()
             }),
             ..Default::default()
@@ -771,10 +781,10 @@ mod tests {
         let frame = Annotated::new(Frame {
             vars: Annotated::new({
                 let mut vars = Object::new();
-                vars.insert("0".to_string(), Annotated::new("foo".to_string().into()));
-                vars.insert("1".to_string(), Annotated::new("bar".to_string().into()));
-                vars.insert("2".to_string(), Annotated::new("baz".to_string().into()));
-                vars.insert("3".to_string(), Annotated::empty());
+                vars.insert("0".into(), Annotated::new("foo".to_string().into()));
+                vars.insert("1".into(), Annotated::new("bar".to_string().into()));
+                vars.insert("2".into(), Annotated::new("baz".to_string().into()));
+                vars.insert("3".into(), Annotated::empty());
                 vars.into()
             }),
             ..Default::default()

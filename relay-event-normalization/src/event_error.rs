@@ -33,7 +33,7 @@ impl Processor for EmitEventErrors {
                 value: Annotated::from(original_value.take()),
                 other: error
                     .data()
-                    .map(|(k, v)| (k.to_string(), Annotated::from(v.clone())))
+                    .map(|(k, v)| (k.into(), Annotated::from(v.clone())))
                     .collect(),
             });
         }
@@ -114,7 +114,7 @@ mod tests {
             other: {
                 let mut other = Object::new();
                 other.insert(
-                    "foo".to_string(),
+                    "foo".into(),
                     Annotated::from_error(ErrorKind::InvalidData, None),
                 );
                 other

@@ -111,7 +111,7 @@ mod tests {
             app_identifier: Annotated::new("foo.bar.baz".to_string()),
             app_name: Annotated::new("Baz App".to_string()),
             app_version: Annotated::new("1.0".to_string()),
-            app_build: Annotated::new("100001".to_string().into()),
+            app_build: Annotated::new("100001".into()),
             app_memory: Annotated::new(22883948),
             in_foreground: Annotated::new(true),
             view_names: Annotated::new(vec![
@@ -121,8 +121,8 @@ mod tests {
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },

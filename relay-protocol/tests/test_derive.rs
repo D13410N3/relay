@@ -212,7 +212,7 @@ fn test_skip_object_null_deep() {
     let helper = Annotated::new(Helper {
         items: Annotated::new({
             let mut obj = Object::<String>::new();
-            obj.insert("foo".to_string(), Annotated::default());
+            obj.insert("foo".into(), Annotated::default());
             obj
         }),
     });
@@ -222,7 +222,7 @@ fn test_skip_object_null_deep() {
     let helper = Annotated::new(Helper {
         items: Annotated::new({
             let mut obj = Object::<String>::new();
-            obj.insert("foo".to_string(), Annotated::new(String::new()));
+            obj.insert("foo".into(), Annotated::new(String::new()));
             obj
         }),
     });
@@ -253,7 +253,7 @@ fn test_skip_object_empty() {
     let helper = Annotated::new(Helper {
         items: Annotated::new({
             let mut obj = Object::<String>::new();
-            obj.insert("foo".to_string(), Annotated::default());
+            obj.insert("foo".into(), Annotated::default());
             obj
         }),
     });
@@ -263,7 +263,7 @@ fn test_skip_object_empty() {
     let helper = Annotated::new(Helper {
         items: Annotated::new({
             let mut obj = Object::<String>::new();
-            obj.insert("foo".to_string(), Annotated::new(String::new()));
+            obj.insert("foo".into(), Annotated::new(String::new()));
             obj
         }),
     });
@@ -288,7 +288,7 @@ fn test_skip_object_empty_deep() {
     let helper = Annotated::new(Helper {
         items: Annotated::new({
             let mut obj = Object::<String>::new();
-            obj.insert("foo".to_string(), Annotated::new(String::new()));
+            obj.insert("foo".into(), Annotated::new(String::new()));
             obj
         }),
     });
@@ -298,7 +298,7 @@ fn test_skip_object_empty_deep() {
     let helper = Annotated::new(Helper {
         items: Annotated::new({
             let mut obj = Object::<String>::new();
-            obj.insert("foo".to_string(), Annotated::new("some".to_string()));
+            obj.insert("foo".into(), Annotated::new("some".to_string()));
             obj
         }),
     });

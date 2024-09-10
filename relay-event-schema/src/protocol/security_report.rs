@@ -7,7 +7,9 @@ use std::collections::BTreeMap;
 use std::fmt::{self, Write};
 
 use chrono::{DateTime, Utc};
-use relay_protocol::{Annotated, Array, Empty, FromValue, IntoValue, Object, Value};
+use relay_protocol::{
+    Annotated, Array, CompactString, Empty, FromValue, IntoValue, Object, ToCompactString, Value,
+};
 use serde::de::{self, Error, IgnoredAny};
 use serde::{Deserialize, Deserializer, Serialize};
 use url::Url;
@@ -253,7 +255,7 @@ struct CspRaw {
     disposition: Option<String>,
 
     #[serde(flatten)]
-    other: BTreeMap<String, serde_json::Value>,
+    other: BTreeMap<CompactString, serde_json::Value>,
 }
 
 fn de_opt_num_or_str<'de, D>(deserializer: D) -> Result<Option<u64>, D::Error>
@@ -465,12 +467,12 @@ impl CspRaw {
     fn get_tags(&self, effective_directive: CspDirective) -> Tags {
         Tags(PairList::from(vec![
             Annotated::new(TagEntry(
-                Annotated::new("effective-directive".to_string()),
-                Annotated::new(effective_directive.to_string()),
+                Annotated::new("effective-directive".into()),
+                Annotated::new(effective_directive.to_compact_string()),
             )),
             Annotated::new(TagEntry(
-                Annotated::new("blocked-uri".to_string()),
-                Annotated::new(self.sanitized_blocked_uri()),
+                Annotated::new("blocked-uri".into()),
+                Annotated::new(self.sanitized_blocked_uri().into()),
             )),
         ]))
     }
@@ -757,14 +759,14 @@ impl ExpectCtRaw {
 
     fn get_tags(&self) -> Tags {
         let mut tags = vec![Annotated::new(TagEntry(
-            Annotated::new("hostname".to_string()),
-            Annotated::new(self.hostname.clone()),
+            Annotated::new("hostname".into()),
+            Annotated::new(self.hostname.to_compact_string()),
         ))];
 
         if let Some(port) = self.port {
             tags.push(Annotated::new(TagEntry(
-                Annotated::new("port".to_string()),
-                Annotated::new(port.to_string()),
+                Annotated::new("port".into()),
+                Annotated::new(port.to_compact_string()),
             )));
         }
 
@@ -855,7 +857,7 @@ struct HpkpRaw {
     validated_certificate_chain: Option<Vec<String>>,
     known_pins: Vec<String>,
     #[serde(flatten)]
-    other: BTreeMap<String, serde_json::Value>,
+    other: BTreeMap<CompactString, serde_json::Value>,
 }
 
 impl HpkpRaw {
@@ -895,21 +897,21 @@ impl HpkpRaw {
 
     fn get_tags(&self) -> Tags {
         let mut tags = vec![Annotated::new(TagEntry(
-            Annotated::new("hostname".to_string()),
-            Annotated::new(self.hostname.clone()),
+            Annotated::new("hostname".into()),
+            Annotated::new(self.hostname.to_compact_string()),
         ))];
 
         if let Some(port) = self.port {
             tags.push(Annotated::new(TagEntry(
-                Annotated::new("port".to_string()),
-                Annotated::new(port.to_string()),
+                Annotated::new("port".into()),
+                Annotated::new(port.to_compact_string()),
             )));
         }
 
         if let Some(include_subdomains) = self.include_subdomains {
             tags.push(Annotated::new(TagEntry(
-                Annotated::new("include-subdomains".to_string()),
-                Annotated::new(include_subdomains.to_string()),
+                Annotated::new("include-subdomains".into()),
+                Annotated::new(include_subdomains.to_compact_string()),
             )));
         }
 
@@ -1079,28 +1081,28 @@ impl ExpectStapleRaw {
 
     fn get_tags(&self) -> Tags {
         let mut tags = vec![Annotated::new(TagEntry(
-            Annotated::new("hostname".to_string()),
-            Annotated::new(self.hostname.clone()),
+            Annotated::new("hostname".into()),
+            Annotated::new(self.hostname.to_compact_string()),
         ))];
 
         if let Some(port) = self.port {
             tags.push(Annotated::new(TagEntry(
-                Annotated::new("port".to_string()),
-                Annotated::new(port.to_string()),
+                Annotated::new("port".into()),
+                Annotated::new(port.to_compact_string()),
             )));
         }
 
         if let Some(response_status) = self.response_status {
             tags.push(Annotated::new(TagEntry(
-                Annotated::new("response_status".to_string()),
-                Annotated::new(response_status.to_string()),
+                Annotated::new("response_status".into()),
+                Annotated::new(response_status.to_compact_string()),
             )));
         }
 
         if let Some(cert_status) = self.cert_status {
             tags.push(Annotated::new(TagEntry(
-                Annotated::new("cert_status".to_string()),
-                Annotated::new(cert_status.to_string()),
+                Annotated::new("cert_status".into()),
+                Annotated::new(cert_status.to_compact_string()),
             )));
         }
 

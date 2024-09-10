@@ -177,7 +177,7 @@ mod tests {
 
     use super::*;
 
-    use relay_event_schema::protocol::{Event, LenientString};
+    use relay_event_schema::protocol::Event;
     use relay_protocol::Annotated;
 
     fn mock_filters() -> GenericFiltersMap {
@@ -205,7 +205,7 @@ mod tests {
 
         // Matching first rule.
         let event = Event {
-            release: Annotated::new(LenientString("1.0".to_string())),
+            release: Annotated::new("1.0".into()),
             ..Default::default()
         };
         assert_eq!(
@@ -235,7 +235,7 @@ mod tests {
 
         // Matching both rules (first is taken).
         let event = Event {
-            release: Annotated::new(LenientString("1.0".to_string())),
+            release: Annotated::new("1.0".into()),
             transaction: Annotated::new("/hello".to_string()),
             ..Default::default()
         };
@@ -269,7 +269,7 @@ mod tests {
         };
 
         let event = Event {
-            release: Annotated::new(LenientString("1.0".to_string())),
+            release: Annotated::new("1.0".into()),
             transaction: Annotated::new("/hello".to_string()),
             ..Default::default()
         };

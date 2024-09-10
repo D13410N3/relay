@@ -9,7 +9,7 @@ use std::time::Duration;
 
 use relay_base_schema::metrics::{DurationUnit, MetricUnit};
 use relay_event_schema::protocol::{Breakdowns, Event, Measurement, Measurements, Timestamp};
-use relay_protocol::Annotated;
+use relay_protocol::{format_compact, Annotated};
 use serde::{Deserialize, Serialize};
 
 /// A time window declared by its start and end timestamp.
@@ -146,7 +146,7 @@ impl EmitBreakdowns for SpanOperationsConfig {
                 unit: Annotated::new(MetricUnit::Duration(DurationUnit::MilliSecond)),
             };
 
-            let op_breakdown_name = format!("ops.{operation_name}");
+            let op_breakdown_name = format_compact!("ops.{operation_name}");
             breakdown.insert(op_breakdown_name, Annotated::new(op_value));
         }
 
@@ -154,7 +154,7 @@ impl EmitBreakdowns for SpanOperationsConfig {
             value: Annotated::new(relay_common::time::duration_to_millis(total_time)),
             unit: Annotated::new(MetricUnit::Duration(DurationUnit::MilliSecond)),
         });
-        breakdown.insert("total.time".to_string(), total_time_value);
+        breakdown.insert("total.time".into(), total_time_value);
 
         Some(breakdown)
     }
@@ -227,7 +227,7 @@ pub fn normalize_breakdowns(event: &mut Event, breakdowns_config: &BreakdownsCon
 
     for (breakdown_name, breakdown) in get_breakdown_measurements(event, breakdowns_config) {
         event_breakdowns
-            .entry(breakdown_name.to_owned())
+            .entry(breakdown_name.into())
             .or_insert_with(|| Annotated::new(Measurements::default()))
             .value_mut()
             .get_or_insert_with(Measurements::default)
@@ -265,7 +265,7 @@ mod tests {
             let mut span_ops_breakdown = Measurements::default();
 
             span_ops_breakdown.insert(
-                "lcp".to_owned(),
+                "lcp".into(),
                 Annotated::new(Measurement {
                     value: Annotated::new(420.69),
                     unit: Annotated::empty(),
@@ -273,7 +273,7 @@ mod tests {
             );
 
             let mut breakdowns = Object::new();
-            breakdowns.insert("span_ops".to_owned(), Annotated::new(span_ops_breakdown));
+            breakdowns.insert("span_ops".into(), Annotated::new(span_ops_breakdown));
 
             breakdowns
         });
@@ -366,7 +366,7 @@ mod tests {
             let mut span_ops_breakdown = Measurements::default();
 
             span_ops_breakdown.insert(
-                "ops.http".to_owned(),
+                "ops.http".into(),
                 Annotated::new(Measurement {
                     // 1 hour in milliseconds
                     value: Annotated::new(3_600_000.0),
@@ -375,7 +375,7 @@ mod tests {
             );
 
             span_ops_breakdown.insert(
-                "ops.db".to_owned(),
+                "ops.db".into(),
                 Annotated::new(Measurement {
                     // 2 hours in milliseconds
                     value: Annotated::new(7_200_000.0),
@@ -384,7 +384,7 @@ mod tests {
             );
 
             span_ops_breakdown.insert(
-                "total.time".to_owned(),
+                "total.time".into(),
                 Annotated::new(Measurement {
                     // 4 hours and 10 microseconds in milliseconds
                     value: Annotated::new(14_400_000.01),
@@ -394,11 +394,11 @@ mod tests {
 
             let mut breakdowns = Object::new();
             breakdowns.insert(
-                "span_ops_2".to_owned(),
+                "span_ops_2".into(),
                 Annotated::new(span_ops_breakdown.clone()),
             );
 
-            breakdowns.insert("span_ops".to_owned(), Annotated::new(span_ops_breakdown));
+            breakdowns.insert("span_ops".into(), Annotated::new(span_ops_breakdown));
 
             breakdowns
         });

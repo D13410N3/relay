@@ -8,8 +8,8 @@ use std::{fmt, net};
 use chrono::{DateTime, Datelike, Duration, LocalResult, NaiveDateTime, TimeZone, Utc};
 use enumset::EnumSet;
 use relay_protocol::{
-    Annotated, Array, Empty, Error, ErrorKind, FromValue, IntoValue, Meta, Object,
-    SkipSerialization, Value,
+    Annotated, Array, CompactString, Empty, Error, ErrorKind, FromValue, IntoValue, Meta, Object,
+    SkipSerialization, ToCompactString, Value,
 };
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -388,7 +388,7 @@ macro_rules! hex_metrastructure {
 
         impl IntoValue for $type {
             fn into_value(self) -> Value {
-                Value::String(self.to_string())
+                Value::String(self.to_compact_string())
             }
             fn serialize_payload<S>(
                 &self,
@@ -399,7 +399,7 @@ macro_rules! hex_metrastructure {
                 Self: Sized,
                 S: Serializer,
             {
-                Serialize::serialize(&self.to_string(), s)
+                Serializer::collect_str(s, self)
             }
         }
 
@@ -436,7 +436,7 @@ relay_common::impl_str_serde!(Addr, "an address");
 #[derive(
     Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash, Empty, IntoValue, ProcessValue, Serialize,
 )]
-pub struct IpAddr(pub String);
+pub struct IpAddr(pub CompactString);
 
 impl IpAddr {
     /// Returns the auto marker ip address.
@@ -447,7 +447,7 @@ impl IpAddr {
     /// Parses an `IpAddr` from a string
     pub fn parse<S>(value: S) -> Result<Self, S>
     where
-        S: AsRef<str> + Into<String>,
+        S: AsRef<str> + Into<CompactString>,
     {
         if value.as_ref() == "{{auto}}" {
             return Ok(IpAddr(value.into()));
@@ -466,7 +466,7 @@ impl IpAddr {
 
     /// Checks whether the contained ip address is still valid (relevant for PII processing).
     pub fn is_valid(&self) -> bool {
-        Self::parse(&self.0).is_ok()
+        self.is_auto() || net::IpAddr::from_str(self.0.as_ref()).is_ok()
     }
 
     /// Returns the string value of this ip address.
@@ -475,7 +475,7 @@ impl IpAddr {
     }
 
     /// Convert IP address into owned string.
-    pub fn into_inner(self) -> String {
+    pub fn into_inner(self) -> CompactString {
         self.0
     }
 }
@@ -494,7 +494,7 @@ impl Default for IpAddr {
 
 impl From<std::net::IpAddr> for IpAddr {
     fn from(ip_addr: std::net::IpAddr) -> Self {
-        Self(ip_addr.to_string())
+        Self(ip_addr.to_compact_string())
     }
 }
 
@@ -656,7 +656,7 @@ impl FromValue for Level {
 
 impl IntoValue for Level {
     fn into_value(self) -> Value {
-        Value::String(self.to_string())
+        Value::String(self.name().into())
     }
 
     fn serialize_payload<S>(&self, s: S, _behavior: SkipSerialization) -> Result<S::Ok, S::Error>
@@ -664,7 +664,7 @@ impl IntoValue for Level {
         Self: Sized,
         S: Serializer,
     {
-        Serialize::serialize(&self.to_string(), s)
+        Serialize::serialize(self.name(), s)
     }
 }
 
@@ -679,7 +679,7 @@ impl Empty for Level {
 
 /// A "into-string" type of value. Emulates an invocation of `str(x)` in Python
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Empty, IntoValue, ProcessValue)]
-pub struct LenientString(pub String);
+pub struct LenientString(pub CompactString);
 
 impl LenientString {
     /// Returns the string value.
@@ -688,7 +688,7 @@ impl LenientString {
     }
 
     /// Unwraps the inner raw string.
-    pub fn into_inner(self) -> String {
+    pub fn into_inner(self) -> CompactString {
         self.0
     }
 }
@@ -700,7 +700,7 @@ impl AsRef<str> for LenientString {
 }
 
 impl std::ops::Deref for LenientString {
-    type Target = String;
+    type Target = CompactString;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -713,9 +713,15 @@ impl std::ops::DerefMut for LenientString {
     }
 }
 
-impl From<String> for LenientString {
-    fn from(value: String) -> Self {
-        LenientString(value)
+impl From<CompactString> for LenientString {
+    fn from(value: CompactString) -> Self {
+        Self(value)
+    }
+}
+
+impl From<&'_ str> for LenientString {
+    fn from(value: &'_ str) -> Self {
+        Self(value.into())
     }
 }
 
@@ -724,13 +730,17 @@ impl FromValue for LenientString {
         match value {
             Annotated(Some(Value::String(string)), meta) => Annotated(Some(string), meta),
             // XXX: True/False instead of true/false because of old python code
-            Annotated(Some(Value::Bool(true)), meta) => Annotated(Some("True".to_string()), meta),
-            Annotated(Some(Value::Bool(false)), meta) => Annotated(Some("False".to_string()), meta),
-            Annotated(Some(Value::U64(num)), meta) => Annotated(Some(num.to_string()), meta),
-            Annotated(Some(Value::I64(num)), meta) => Annotated(Some(num.to_string()), meta),
+            Annotated(Some(Value::Bool(true)), meta) => Annotated(Some("True".into()), meta),
+            Annotated(Some(Value::Bool(false)), meta) => Annotated(Some("False".into()), meta),
+            Annotated(Some(Value::U64(num)), meta) => {
+                Annotated(Some(num.to_compact_string()), meta)
+            }
+            Annotated(Some(Value::I64(num)), meta) => {
+                Annotated(Some(num.to_compact_string()), meta)
+            }
             Annotated(Some(Value::F64(num)), mut meta) => {
                 if num.abs() < (1i64 << 53) as f64 {
-                    Annotated(Some(num.trunc().to_string()), meta)
+                    Annotated(Some(num.trunc().to_compact_string()), meta)
                 } else {
                     meta.add_error(Error::expected("a number with JSON precision"));
                     meta.set_original_value(Some(num));
@@ -750,7 +760,7 @@ impl FromValue for LenientString {
 
 /// A "into-string" type of value. All non-string values are serialized as JSON.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Empty, IntoValue, ProcessValue)]
-pub struct JsonLenientString(pub String);
+pub struct JsonLenientString(pub CompactString);
 
 impl JsonLenientString {
     /// Returns the string value.
@@ -759,7 +769,7 @@ impl JsonLenientString {
     }
 
     /// Unwraps the inner raw string.
-    pub fn into_inner(self) -> String {
+    pub fn into_inner(self) -> CompactString {
         self.0
     }
 }
@@ -771,7 +781,7 @@ impl AsRef<str> for JsonLenientString {
 }
 
 impl std::ops::Deref for JsonLenientString {
-    type Target = String;
+    type Target = CompactString;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -784,7 +794,7 @@ impl std::ops::DerefMut for JsonLenientString {
     }
 }
 
-impl From<JsonLenientString> for String {
+impl From<JsonLenientString> for CompactString {
     fn from(value: JsonLenientString) -> Self {
         value.0
     }
@@ -793,18 +803,25 @@ impl From<JsonLenientString> for String {
 impl FromValue for JsonLenientString {
     fn from_value(value: Annotated<Value>) -> Annotated<Self> {
         match value {
-            Annotated(Some(Value::String(string)), meta) => Annotated(Some(string.into()), meta),
-            Annotated(Some(other), meta) => {
-                Annotated(Some(serde_json::to_string(&other).unwrap().into()), meta)
-            }
+            Annotated(Some(Value::String(string)), meta) => Annotated(Some(Self(string)), meta),
+            Annotated(Some(other), meta) => Annotated(
+                Some(Self(serde_json::to_string(&other).unwrap().into())),
+                meta,
+            ),
             Annotated(None, meta) => Annotated(None, meta),
         }
     }
 }
 
-impl From<String> for JsonLenientString {
-    fn from(value: String) -> Self {
-        JsonLenientString(value)
+impl From<CompactString> for JsonLenientString {
+    fn from(value: CompactString) -> Self {
+        Self(value)
+    }
+}
+
+impl From<&'_ str> for JsonLenientString {
+    fn from(value: &'_ str) -> Self {
+        Self(value.into())
     }
 }
 
@@ -1079,7 +1096,7 @@ mod tests {
 
     #[test]
     fn test_hex_serialization() {
-        let value = Value::String("0x2a".to_string());
+        let value = Value::String("0x2a".into());
         let addr: Annotated<Addr> = FromValue::from_value(Annotated::new(value));
         assert_eq!(addr.payload_to_json().unwrap(), "\"0x2a\"");
         let value = Value::U64(42);

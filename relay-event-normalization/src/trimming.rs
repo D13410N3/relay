@@ -641,10 +641,10 @@ mod tests {
             breadcrumbs: Annotated::new(Values::new(
                 repeat(Annotated::new(Breadcrumb {
                     data: {
-                        let mut map = Map::new();
+                        let mut map = Object::new();
                         map.insert(
-                            "spamspamspam".to_string(),
-                            Annotated::new(Value::String("blablabla".to_string())),
+                            "spamspamspam".into(),
+                            Annotated::new(Value::String("blablabla".into())),
                         );
                         Annotated::new(map)
                     },

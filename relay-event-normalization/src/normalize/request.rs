@@ -256,8 +256,8 @@ mod tests {
             Request {
                 url: Annotated::new("http://example.com/path".to_string()),
                 query_string: Annotated::new(Query(PairList(vec![Annotated::new((
-                    Annotated::new("some".to_string()),
-                    Annotated::new("thing".to_string().into()),
+                    Annotated::new("some".into()),
+                    Annotated::new("thing".into()),
                 )),]))),
                 fragment: Annotated::new("else".to_string()),
                 ..Request::default()
@@ -305,8 +305,8 @@ mod tests {
         let mut request = Request {
             url: Annotated::new("http://example.com/path?completely=different#stuff".to_string()),
             query_string: Annotated::new(Query(PairList(vec![Annotated::new((
-                Annotated::new("some".to_string()),
-                Annotated::new("thing".to_string().into()),
+                Annotated::new("some".into()),
+                Annotated::new("thing".into()),
             ))]))),
             fragment: Annotated::new("else".to_string()),
             ..Request::default()
@@ -319,8 +319,8 @@ mod tests {
             Request {
                 url: Annotated::new("http://example.com/path".to_string()),
                 query_string: Annotated::new(Query(PairList(vec![Annotated::new((
-                    Annotated::new("some".to_string()),
-                    Annotated::new("thing".to_string().into()),
+                    Annotated::new("some".into()),
+                    Annotated::new("thing".into()),
                 )),]))),
                 fragment: Annotated::new("else".to_string()),
                 ..Request::default()
@@ -342,8 +342,8 @@ mod tests {
             Request {
                 url: Annotated::new("http://example.com/path".to_string()),
                 query_string: Annotated::new(Query(PairList(vec![Annotated::new((
-                    Annotated::new("some".to_string()),
-                    Annotated::new("".to_string().into()),
+                    Annotated::new("some".into()),
+                    Annotated::new("".into()),
                 )),]))),
                 ..Request::default()
             }
@@ -355,8 +355,8 @@ mod tests {
         let mut request = Request {
             url: Annotated::new("http://example.com".to_string()),
             headers: Annotated::new(Headers(PairList(vec![Annotated::new((
-                Annotated::new("Cookie".to_string().into()),
-                Annotated::new("a=b;c=d".to_string().into()),
+                Annotated::new("Cookie".into()),
+                Annotated::new("a=b;c=d".into()),
             ))]))),
             ..Request::default()
         };
@@ -366,14 +366,8 @@ mod tests {
         assert_eq!(
             request.cookies,
             Annotated::new(Cookies(PairList(vec![
-                Annotated::new((
-                    Annotated::new("a".to_string()),
-                    Annotated::new("b".to_string()),
-                )),
-                Annotated::new((
-                    Annotated::new("c".to_string()),
-                    Annotated::new("d".to_string()),
-                )),
+                Annotated::new((Annotated::new("a".into()), Annotated::new("b".into()),)),
+                Annotated::new((Annotated::new("c".into()), Annotated::new("d".into()),)),
             ])))
         );
 
@@ -386,14 +380,14 @@ mod tests {
             url: Annotated::new("http://example.com".to_string()),
             headers: Annotated::new(Headers(
                 vec![Annotated::new((
-                    Annotated::new("Cookie".to_string().into()),
-                    Annotated::new("a=b;c=d".to_string().into()),
+                    Annotated::new("Cookie".into()),
+                    Annotated::new("a=b;c=d".into()),
                 ))]
                 .into(),
             )),
             cookies: Annotated::new(Cookies(PairList(vec![Annotated::new((
-                Annotated::new("foo".to_string()),
-                Annotated::new("bar".to_string()),
+                Annotated::new("foo".into()),
+                Annotated::new("bar".into()),
             ))]))),
             ..Request::default()
         };
@@ -403,8 +397,8 @@ mod tests {
         assert_eq!(
             request.cookies,
             Annotated::new(Cookies(PairList(vec![Annotated::new((
-                Annotated::new("foo".to_string()),
-                Annotated::new("bar".to_string()),
+                Annotated::new("foo".into()),
+                Annotated::new("bar".into()),
             ))])))
         );
 
@@ -439,15 +433,12 @@ mod tests {
     #[test]
     fn test_infer_json() {
         let mut request = Request {
-            data: Annotated::from(Value::String(r#"{"foo":"bar"}"#.to_string())),
+            data: Annotated::from(Value::String(r#"{"foo":"bar"}"#.into())),
             ..Request::default()
         };
 
         let mut expected_value = Object::new();
-        expected_value.insert(
-            "foo".to_string(),
-            Annotated::from(Value::String("bar".into())),
-        );
+        expected_value.insert("foo".into(), Annotated::from(Value::String("bar".into())));
 
         normalize_request(&mut request);
         assert_eq!(
@@ -460,10 +451,10 @@ mod tests {
     #[test]
     fn test_broken_json_with_fallback() {
         let mut request = Request {
-            data: Annotated::from(Value::String(r#"{"foo":"b"#.to_string())),
+            data: Annotated::from(Value::String(r#"{"foo":"b"#.into())),
             headers: Annotated::from(Headers(PairList(vec![Annotated::new((
-                Annotated::new("Content-Type".to_string().into()),
-                Annotated::new("text/plain; encoding=utf-8".to_string().into()),
+                Annotated::new("Content-Type".into()),
+                Annotated::new("text/plain; encoding=utf-8".into()),
             ))]))),
             ..Request::default()
         };
@@ -476,7 +467,7 @@ mod tests {
     #[test]
     fn test_broken_json_without_fallback() {
         let mut request = Request {
-            data: Annotated::from(Value::String(r#"{"foo":"b"#.to_string())),
+            data: Annotated::from(Value::String(r#"{"foo":"b"#.into())),
             ..Request::default()
         };
 
@@ -488,15 +479,12 @@ mod tests {
     #[test]
     fn test_infer_url_encoded() {
         let mut request = Request {
-            data: Annotated::from(Value::String(r#"foo=bar"#.to_string())),
+            data: Annotated::from(Value::String(r#"foo=bar"#.into())),
             ..Request::default()
         };
 
         let mut expected_value = Object::new();
-        expected_value.insert(
-            "foo".to_string(),
-            Annotated::from(Value::String("bar".into())),
-        );
+        expected_value.insert("foo".into(), Annotated::from(Value::String("bar".into())));
 
         normalize_request(&mut request);
         assert_eq!(
@@ -509,7 +497,7 @@ mod tests {
     #[test]
     fn test_infer_url_false_positive() {
         let mut request = Request {
-            data: Annotated::from(Value::String("dGU=".to_string())),
+            data: Annotated::from(Value::String("dGU=".into())),
             ..Request::default()
         };
 
@@ -521,7 +509,7 @@ mod tests {
     #[test]
     fn test_infer_url_encoded_base64() {
         let mut request = Request {
-            data: Annotated::from(Value::String("dA==".to_string())),
+            data: Annotated::from(Value::String("dA==".into())),
             ..Request::default()
         };
 
@@ -533,7 +521,7 @@ mod tests {
     #[test]
     fn test_infer_xml() {
         let mut request = Request {
-            data: Annotated::from(Value::String("<?xml version=\"1.0\" ?>".to_string())),
+            data: Annotated::from(Value::String("<?xml version=\"1.0\" ?>".into())),
             ..Request::default()
         };
 
@@ -545,7 +533,7 @@ mod tests {
     #[test]
     fn test_infer_binary() {
         let mut request = Request {
-            data: Annotated::from(Value::String("\u{001f}1\u{0000}\u{0000}".to_string())),
+            data: Annotated::from(Value::String("\u{001f}1\u{0000}\u{0000}".into())),
             ..Request::default()
         };
 

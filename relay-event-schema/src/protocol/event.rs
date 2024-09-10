@@ -805,14 +805,12 @@ impl Getter for Event {
 #[cfg(test)]
 mod tests {
     use chrono::{TimeZone, Utc};
-    use relay_protocol::{ErrorKind, Map, Meta};
+    use relay_protocol::{ErrorKind, Meta};
     use similar_asserts::assert_eq;
     use uuid::uuid;
 
     use super::*;
-    use crate::protocol::{
-        Headers, IpAddr, JsonLenientString, PairList, TagEntry, TransactionSource,
-    };
+    use crate::protocol::{Headers, IpAddr, PairList, TagEntry, TransactionSource};
 
     #[test]
     fn test_event_roundtrip() {
@@ -865,7 +863,7 @@ mod tests {
                 Meta::from_error(ErrorKind::InvalidData),
             ),
             level: Annotated::new(Level::Debug),
-            fingerprint: Annotated::new(vec!["myprint".to_string()].into()),
+            fingerprint: Annotated::new(vec!["myprint".into()].into()),
             culprit: Annotated::new("myculprit".to_string()),
             transaction: Annotated::new("mytransaction".to_string()),
             logentry: Annotated::new(LogEntry {
@@ -874,36 +872,36 @@ mod tests {
             }),
             logger: Annotated::new("mylogger".to_string()),
             modules: {
-                let mut map = Map::new();
-                map.insert("mymodule".to_string(), Annotated::new("1.0.0".to_string()));
+                let mut map = Object::new();
+                map.insert("mymodule".into(), Annotated::new("1.0.0".into()));
                 Annotated::new(map)
             },
             platform: Annotated::new("myplatform".to_string()),
             timestamp: Annotated::new(Utc.with_ymd_and_hms(2000, 1, 1, 0, 0, 0).unwrap().into()),
             server_name: Annotated::new("myhost".to_string()),
-            release: Annotated::new("myrelease".to_string().into()),
+            release: Annotated::new("myrelease".into()),
             dist: Annotated::new("mydist".to_string()),
             environment: Annotated::new("myenv".to_string()),
             tags: {
                 let items = vec![Annotated::new(TagEntry(
-                    Annotated::new("tag".to_string()),
-                    Annotated::new("value".to_string()),
+                    Annotated::new("tag".into()),
+                    Annotated::new("value".into()),
                 ))];
                 Annotated::new(Tags(items.into()))
             },
             extra: {
-                let mut map = Map::new();
+                let mut map = Object::new();
                 map.insert(
-                    "extra".to_string(),
-                    Annotated::new(ExtraValue(Value::String("value".to_string()))),
+                    "extra".into(),
+                    Annotated::new(ExtraValue(Value::String("value".into()))),
                 );
                 Annotated::new(map)
             },
             other: {
-                let mut map = Map::new();
+                let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -962,7 +960,7 @@ mod tests {
                 Meta::from_error(ErrorKind::InvalidData),
             ),
             fingerprint: Annotated(
-                Some(vec!["{{ default }}".to_string()].into()),
+                Some(vec!["{{ default }}".into()].into()),
                 Meta::from_error(ErrorKind::InvalidData),
             ),
             platform: Annotated(
@@ -991,7 +989,7 @@ mod tests {
     fn test_fingerprint_empty_string() {
         let json = r#"{"fingerprint":[""]}"#;
         let event = Annotated::new(Event {
-            fingerprint: Annotated::new(vec!["".to_string()].into()),
+            fingerprint: Annotated::new(vec!["".into()].into()),
             ..Default::default()
         });
 
@@ -1028,7 +1026,7 @@ mod tests {
         let input = r#"{"release":42}"#;
         let output = r#"{"release":"42"}"#;
         let event = Annotated::new(Event {
-            release: Annotated::new("42".to_string().into()),
+            release: Annotated::new("42".into()),
             ..Default::default()
         });
 
@@ -1052,15 +1050,12 @@ mod tests {
         let event = Event::from_value(json.into());
         let event = event.value().unwrap();
 
-        assert_eq!(
-            Some(&Value::String("string1".to_owned())),
-            event.extra_at("a")
-        );
+        assert_eq!(Some(&Value::String("string1".into())), event.extra_at("a"));
         assert_eq!(Some(&Value::I64(42)), event.extra_at("b"));
         assert!(matches!(event.extra_at("c"), Some(&Value::Object(_))));
         assert_eq!(None, event.extra_at("d"));
         assert_eq!(
-            Some(&Value::String("string2".to_owned())),
+            Some(&Value::String("string2".into())),
             event.extra_at("c.d")
         );
         assert_eq!(None, event.extra_at("c.e"));
@@ -1084,11 +1079,11 @@ mod tests {
     fn test_field_value_provider_event_filled() {
         let event = Event {
             level: Annotated::new(Level::Info),
-            release: Annotated::new(LenientString("1.1.1".to_owned())),
+            release: Annotated::new("1.1.1".into()),
             environment: Annotated::new("prod".to_owned()),
             user: Annotated::new(User {
-                ip_address: Annotated::new(IpAddr("127.0.0.1".to_owned())),
-                id: Annotated::new(LenientString("user-id".into())),
+                ip_address: Annotated::new(IpAddr("127.0.0.1".into())),
+                id: Annotated::new("user-id".into()),
                 segment: Annotated::new("user-seg".into()),
                 sentry_user: Annotated::new("id:user-id".into()),
                 ..Default::default()
@@ -1100,9 +1095,7 @@ mod tests {
             }),
             exceptions: Annotated::new(Values {
                 values: Annotated::new(vec![Annotated::new(Exception {
-                    value: Annotated::new(JsonLenientString::from(
-                        "canvas.contentDocument".to_owned(),
-                    )),
+                    value: Annotated::new("canvas.contentDocument".into()),
                     ..Default::default()
                 })]),
                 ..Default::default()
@@ -1127,8 +1120,8 @@ mod tests {
             }),
             tags: {
                 let items = vec![Annotated::new(TagEntry(
-                    Annotated::new("custom".to_string()),
-                    Annotated::new("custom-value".to_string()),
+                    Annotated::new("custom".into()),
+                    Annotated::new("custom-value".into()),
                 ))];
                 Annotated::new(Tags(items.into()))
             },

@@ -1,7 +1,9 @@
 use std::fmt;
 use std::str::FromStr;
 
-use relay_protocol::{Annotated, Empty, ErrorKind, FromValue, IntoValue, SkipSerialization, Value};
+use relay_protocol::{
+    Annotated, CompactString, Empty, ErrorKind, FromValue, IntoValue, SkipSerialization, Value,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::processor::ProcessValue;
@@ -28,7 +30,7 @@ pub enum TransactionSource {
     /// This is the default value set by Relay for legacy SDKs.
     Unknown,
     /// Any other unknown source that is not explicitly defined above.
-    Other(String),
+    Other(CompactString),
 }
 
 impl TransactionSource {
@@ -60,7 +62,7 @@ impl FromStr for TransactionSource {
             "sanitized" => Ok(Self::Sanitized),
             "task" => Ok(Self::Task),
             "unknown" => Ok(Self::Unknown),
-            s => Ok(Self::Other(s.to_owned())),
+            s => Ok(Self::Other(s.into())),
         }
     }
 }
@@ -86,7 +88,7 @@ impl Empty for TransactionSource {
 
 impl FromValue for TransactionSource {
     fn from_value(value: Annotated<Value>) -> Annotated<Self> {
-        match String::from_value(value) {
+        match CompactString::from_value(value) {
             Annotated(Some(value), mut meta) => match value.parse() {
                 Ok(source) => Annotated(Some(source), meta),
                 Err(_) => {
@@ -105,7 +107,10 @@ impl IntoValue for TransactionSource {
     where
         Self: Sized,
     {
-        Value::String(self.to_string())
+        Value::String(match self {
+            TransactionSource::Other(s) => s,
+            _ => self.as_str().into(),
+        })
     }
 
     fn serialize_payload<S>(&self, s: S, _behavior: SkipSerialization) -> Result<S::Ok, S::Error>
@@ -113,7 +118,7 @@ impl IntoValue for TransactionSource {
         Self: Sized,
         S: serde::Serializer,
     {
-        serde::Serialize::serialize(&self.to_string(), s)
+        serde::Serialize::serialize(self.as_str(), s)
     }
 }
 
@@ -168,7 +173,7 @@ mod tests {
     #[test]
     fn test_other_source_roundtrip() {
         let json = r#""something-new""#;
-        let source = Annotated::new(TransactionSource::Other("something-new".to_owned()));
+        let source = Annotated::new(TransactionSource::Other("something-new".into()));
 
         assert_eq!(source, Annotated::from_json(json).unwrap());
         assert_eq!(json, source.payload_to_json_pretty().unwrap());

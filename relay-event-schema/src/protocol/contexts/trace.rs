@@ -1,7 +1,7 @@
 use std::fmt;
 use std::str::FromStr;
 
-use relay_protocol::{Annotated, Empty, Error, FromValue, IntoValue, Object, Value};
+use relay_protocol::{Annotated, CompactString, Empty, Error, FromValue, IntoValue, Object, Value};
 
 use crate::processor::ProcessValue;
 use crate::protocol::{OperationType, OriginType, SpanData, SpanStatus};
@@ -19,7 +19,10 @@ impl FromValue for TraceId {
                     meta.set_original_value(Some(value));
                     Annotated(None, meta)
                 } else {
-                    Annotated(Some(TraceId(value.to_ascii_lowercase())), meta)
+                    Annotated(
+                        Some(TraceId(String::from(value).to_ascii_lowercase())),
+                        meta,
+                    )
                 }
             }
             Annotated(None, meta) => Annotated(None, meta),
@@ -40,7 +43,7 @@ impl AsRef<str> for TraceId {
 
 /// A 16-character hex string as described in the W3C trace context spec.
 #[derive(Clone, Debug, Default, Eq, Hash, PartialEq, Empty, IntoValue, ProcessValue)]
-pub struct SpanId(pub String);
+pub struct SpanId(pub CompactString);
 
 relay_common::impl_str_serde!(SpanId, "a span identifier");
 
@@ -48,7 +51,7 @@ impl FromStr for SpanId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(SpanId(s.to_string()))
+        Ok(SpanId(s.into()))
     }
 }
 
@@ -214,10 +217,7 @@ mod tests {
                     name: Annotated::new("/users".into()),
                     params: Annotated::new({
                         let mut map = Object::new();
-                        map.insert(
-                            "tok".to_string(),
-                            Annotated::new(Value::String("test".into())),
-                        );
+                        map.insert("tok".into(), Annotated::new(Value::String("test".into())));
                         map
                     }),
                     other: {
@@ -234,8 +234,8 @@ mod tests {
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },

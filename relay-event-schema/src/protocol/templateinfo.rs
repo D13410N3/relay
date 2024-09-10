@@ -36,7 +36,6 @@ pub struct TemplateInfo {
 
 #[cfg(test)]
 mod tests {
-    use relay_protocol::Map;
     use similar_asserts::assert_eq;
 
     use super::*;
@@ -66,10 +65,10 @@ mod tests {
             context_line: Annotated::new("unimplemented!()".to_string()),
             post_context: Annotated::new(vec![Annotated::new("}".to_string())]),
             other: {
-                let mut map = Map::new();
+                let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },

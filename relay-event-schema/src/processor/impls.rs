@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use enumset::EnumSet;
-use relay_protocol::{Annotated, Array, Meta, Object, Value};
+use relay_protocol::{Annotated, Array, CompactString, Meta, Object, Value};
 use uuid::Uuid;
 
 use crate::processor::{
@@ -25,6 +25,27 @@ impl ProcessValue for String {
         P: Processor,
     {
         processor.process_string(self, meta, state)
+    }
+}
+
+impl ProcessValue for CompactString {
+    #[inline]
+    fn value_type(&self) -> EnumSet<ValueType> {
+        EnumSet::only(ValueType::String)
+    }
+
+    #[inline]
+    fn process_value<P>(
+        &mut self,
+        meta: &mut Meta,
+        processor: &mut P,
+        state: &ProcessingState<'_>,
+    ) -> ProcessingResult
+    where
+        P: Processor,
+    {
+        // processor.process_string(self, meta, state)
+        todo!("TODO(ja): How do we handle CompactString?")
     }
 }
 

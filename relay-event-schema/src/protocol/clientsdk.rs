@@ -88,7 +88,6 @@ impl ClientSdkInfo {
 
 #[cfg(test)]
 mod tests {
-    use relay_protocol::Map;
     use similar_asserts::assert_eq;
 
     use super::*;
@@ -132,12 +131,12 @@ mod tests {
                     version: Annotated::new("0.10.0".to_string()),
                 }),
             ]),
-            client_ip: Annotated::new(IpAddr("127.0.0.1".to_owned())),
+            client_ip: Annotated::new(IpAddr("127.0.0.1".into())),
             other: {
-                let mut map = Map::new();
+                let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -160,7 +159,7 @@ mod tests {
             integrations: Annotated::empty(),
             features: Annotated::empty(),
             packages: Annotated::empty(),
-            client_ip: Annotated::new(IpAddr("127.0.0.1".to_owned())),
+            client_ip: Annotated::new(IpAddr("127.0.0.1".into())),
             other: Default::default(),
         });
 

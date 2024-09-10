@@ -13,6 +13,7 @@ publish = false
 workspace = true
 
 [dependencies]
+compact_str = { workspace = true }
 num-traits = { workspace = true }
 relay-common = { workspace = true }
 relay-protocol-derive = { workspace = true, optional = true }

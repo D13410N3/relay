@@ -5,7 +5,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::meta::{Error, Meta};
 use crate::traits::{Empty, FromValue, IntoValue, SkipSerialization};
-use crate::value::{Map, Value};
+use crate::value::{CompactString, Map, Value};
 
 /// Represents a tree of meta objects.
 #[derive(Default, Debug, Serialize)]
@@ -54,7 +54,7 @@ impl MetaTree {
 }
 
 /// Meta for children.
-pub type MetaMap = Map<String, MetaTree>;
+pub type MetaMap = Map<CompactString, MetaTree>;
 
 /// Wrapper for data fields with optional meta data.
 #[derive(Clone, PartialEq)]
@@ -351,7 +351,7 @@ impl Annotated<Value> {
         match self.value_mut() {
             Some(Value::Array(items)) => {
                 for (idx, item) in items.iter_mut().enumerate() {
-                    if let Some(meta_tree) = meta_tree.children.remove(&idx.to_string()) {
+                    if let Some(meta_tree) = meta_tree.children.remove(idx.to_string().as_str()) {
                         item.attach_meta_tree(meta_tree);
                     }
                 }

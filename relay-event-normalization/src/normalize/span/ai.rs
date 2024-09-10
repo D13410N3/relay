@@ -66,7 +66,7 @@ pub fn extract_ai_measurements(span: &mut Span, ai_model_costs: &ModelCosts) {
             span.measurements
                 .get_or_insert_with(Default::default)
                 .insert(
-                    "ai_total_cost".to_owned(),
+                    "ai_total_cost".into(),
                     Measurement {
                         value: total_cost.into(),
                         unit: MetricUnit::None.into(),

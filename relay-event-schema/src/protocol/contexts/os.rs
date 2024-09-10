@@ -118,7 +118,7 @@ mod tests {
         let context = Annotated::new(Context::Os(Box::new(OsContext {
             name: Annotated::new("iOS".to_string()),
             version: Annotated::new("11.4.2".to_string()),
-            build: Annotated::new(LenientString("FEEDFACE".to_string())),
+            build: Annotated::new("FEEDFACE".into()),
             kernel_version: Annotated::new("17.4.0".to_string()),
             rooted: Annotated::new(true),
             raw_description: Annotated::new("iOS 11.4.2 FEEDFACE (17.4.0)".to_string()),
@@ -126,8 +126,8 @@ mod tests {
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -153,7 +153,7 @@ mod tests {
         let context = Annotated::new(Context::Os(Box::new(OsContext {
             name: Annotated::new("Linux".to_string()),
             version: Annotated::new("5.15.133".to_string()),
-            build: Annotated::new(LenientString("1-microsoft-standard-WSL2".to_string())),
+            build: Annotated::new("1-microsoft-standard-WSL2".into()),
             kernel_version: Annotated::empty(),
             rooted: Annotated::empty(),
             raw_description: Annotated::empty(),

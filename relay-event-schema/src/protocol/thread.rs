@@ -1,7 +1,8 @@
 use std::fmt;
 
 use relay_protocol::{
-    Annotated, Empty, Error, ErrorKind, FromValue, IntoValue, Object, SkipSerialization, Value,
+    Annotated, CompactString, Empty, Error, ErrorKind, FromValue, IntoValue, Object,
+    SkipSerialization, Value,
 };
 use serde::{Deserialize, Serialize, Serializer};
 
@@ -15,7 +16,7 @@ pub enum ThreadId {
     /// Integer representation of the thread id.
     Int(u64),
     /// String representation of the thread id.
-    String(String),
+    String(CompactString),
 }
 
 impl FromValue for ThreadId {
@@ -251,7 +252,6 @@ pub struct Thread {
 
 #[cfg(test)]
 mod tests {
-    use relay_protocol::Map;
     use similar_asserts::assert_eq;
 
     use super::*;
@@ -301,10 +301,10 @@ mod tests {
             state: Annotated::new("RUNNABLE".to_string()),
             held_locks: Annotated::empty(),
             other: {
-                let mut map = Map::new();
+                let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -361,7 +361,7 @@ mod tests {
             held_locks: {
                 let mut locks = Object::new();
                 locks.insert(
-                    "0x07d7437b".to_string(),
+                    "0x07d7437b".into(),
                     Annotated::new(LockReason {
                         ty: Annotated::new(LockReasonType::Waiting),
                         address: Annotated::empty(),
@@ -372,7 +372,7 @@ mod tests {
                     }),
                 );
                 locks.insert(
-                    "0x0d3a2f0a".to_string(),
+                    "0x0d3a2f0a".into(),
                     Annotated::new(LockReason {
                         ty: Annotated::new(LockReasonType::Locked),
                         address: Annotated::empty(),
@@ -385,10 +385,10 @@ mod tests {
                 Annotated::new(locks)
             },
             other: {
-                let mut map = Map::new();
+                let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },

@@ -4,7 +4,8 @@ use std::str::FromStr;
 
 use enumset::EnumSet;
 use relay_protocol::{
-    Annotated, Array, Empty, Error, FromValue, IntoValue, Meta, Object, SkipSerialization, Value,
+    Annotated, Array, Empty, Error, FromValue, IntoValue, Meta, Object, SkipSerialization,
+    ToCompactString, Value,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -161,7 +162,7 @@ macro_rules! impl_traits {
 
         impl IntoValue for $type {
             fn into_value(self) -> Value {
-                Value::String(self.to_string())
+                Value::String(self.to_compact_string())
             }
 
             fn serialize_payload<S>(
@@ -530,7 +531,6 @@ pub struct DebugMeta {
 
 #[cfg(test)]
 mod tests {
-    use relay_protocol::Map;
     use similar_asserts::assert_eq;
 
     use super::*;
@@ -547,8 +547,8 @@ mod tests {
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -568,10 +568,10 @@ mod tests {
         let image = Annotated::new(DebugImage::Jvm(Box::new(JvmDebugImage {
             debug_id: Annotated::new("395835f4-03e0-4436-80d3-136f0749a893".parse().unwrap()),
             other: {
-                let mut map = Map::new();
+                let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -608,8 +608,8 @@ mod tests {
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -669,8 +669,8 @@ mod tests {
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -706,8 +706,8 @@ mod tests {
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -769,8 +769,8 @@ mod tests {
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -833,8 +833,8 @@ mod tests {
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -871,8 +871,8 @@ mod tests {
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -899,8 +899,8 @@ mod tests {
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -914,14 +914,14 @@ mod tests {
     fn test_debug_image_other_roundtrip() {
         let json = r#"{"other":"value","type":"mytype"}"#;
         let image = Annotated::new(DebugImage::Other({
-            let mut map = Map::new();
+            let mut map = Object::new();
             map.insert(
-                "type".to_string(),
-                Annotated::new(Value::String("mytype".to_string())),
+                "type".into(),
+                Annotated::new(Value::String("mytype".into())),
             );
             map.insert(
-                "other".to_string(),
-                Annotated::new(Value::String("value".to_string())),
+                "other".into(),
+                Annotated::new(Value::String("value".into())),
             );
             map
         }));
@@ -934,10 +934,10 @@ mod tests {
     fn test_debug_image_untagged_roundtrip() {
         let json = r#"{"other":"value"}"#;
         let image = Annotated::new(DebugImage::Other({
-            let mut map = Map::new();
+            let mut map = Object::new();
             map.insert(
-                "other".to_string(),
-                Annotated::new(Value::String("value".to_string())),
+                "other".into(),
+                Annotated::new(Value::String("value".into())),
             );
             map
         }));
@@ -966,19 +966,19 @@ mod tests {
                 version_minor: Annotated::new(3),
                 version_patchlevel: Annotated::new(0),
                 other: {
-                    let mut map = Map::new();
+                    let mut map = Object::new();
                     map.insert(
-                        "other".to_string(),
-                        Annotated::new(Value::String("value".to_string())),
+                        "other".into(),
+                        Annotated::new(Value::String("value".into())),
                     );
                     map
                 },
             }),
             other: {
-                let mut map = Map::new();
+                let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },

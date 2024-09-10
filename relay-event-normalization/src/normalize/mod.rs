@@ -397,8 +397,8 @@ mod tests {
                 env: Annotated::new({
                     let mut map = Object::new();
                     map.insert(
-                        "REMOTE_ADDR".to_string(),
-                        Annotated::new(Value::String("2.125.160.216".to_string())),
+                        "REMOTE_ADDR".into(),
+                        Annotated::new(Value::String("2.125.160.216".into())),
                     );
                     map
                 }),
@@ -411,7 +411,7 @@ mod tests {
         normalize_event(&mut event, &NormalizationConfig::default());
 
         let ip_addr = get_value!(event.user.ip_address!);
-        assert_eq!(ip_addr, &IpAddr("2.125.160.216".to_string()));
+        assert_eq!(ip_addr, &IpAddr("2.125.160.216".into()));
     }
 
     #[test]
@@ -421,8 +421,8 @@ mod tests {
                 env: Annotated::new({
                     let mut map = Object::new();
                     map.insert(
-                        "REMOTE_ADDR".to_string(),
-                        Annotated::new(Value::String("whoops".to_string())),
+                        "REMOTE_ADDR".into(),
+                        Annotated::new(Value::String("whoops".into())),
                     );
                     map
                 }),
@@ -455,7 +455,7 @@ mod tests {
         );
 
         let ip_addr = get_value!(event.user.ip_address!);
-        assert_eq!(ip_addr, &IpAddr("2.125.160.216".to_string()));
+        assert_eq!(ip_addr, &IpAddr("2.125.160.216".into()));
     }
 
     #[test]
@@ -483,7 +483,7 @@ mod tests {
         let user = get_value!(event.user!);
         let ip_addr = user.ip_address.value().expect("ip address missing");
 
-        assert_eq!(ip_addr, &IpAddr("2.125.160.216".to_string()));
+        assert_eq!(ip_addr, &IpAddr("2.125.160.216".into()));
         assert!(user.geo.value().is_some());
     }
 
@@ -542,8 +542,8 @@ mod tests {
     fn test_environment_tag_is_moved() {
         let mut event = Annotated::new(Event {
             tags: Annotated::new(Tags(PairList(vec![Annotated::new(TagEntry(
-                Annotated::new("environment".to_string()),
-                Annotated::new("despacito".to_string()),
+                Annotated::new("environment".into()),
+                Annotated::new("despacito".into()),
             ))]))),
             ..Event::default()
         });
@@ -560,8 +560,8 @@ mod tests {
     fn test_empty_environment_is_removed_and_overwritten_with_tag() {
         let mut event = Annotated::new(Event {
             tags: Annotated::new(Tags(PairList(vec![Annotated::new(TagEntry(
-                Annotated::new("environment".to_string()),
-                Annotated::new("despacito".to_string()),
+                Annotated::new("environment".into()),
+                Annotated::new("despacito".into()),
             ))]))),
             environment: Annotated::new("".to_string()),
             ..Event::default()
@@ -622,7 +622,7 @@ mod tests {
         normalize_event(&mut event, &NormalizationConfig::default());
 
         let environment = get_path!(event.environment!);
-        let expected_original = &Value::String("none".to_string());
+        let expected_original = &Value::String("none".into());
 
         assert_eq!(
             environment.meta().iter_errors().collect::<Vec<&Error>>(),
@@ -638,14 +638,14 @@ mod tests {
     #[test]
     fn test_invalid_release_removed() {
         let mut event = Annotated::new(Event {
-            release: Annotated::new(LenientString("Latest".to_string())),
+            release: Annotated::new(LenientString("Latest".into())),
             ..Event::default()
         });
 
         normalize_event(&mut event, &NormalizationConfig::default());
 
         let release = get_path!(event.release!);
-        let expected_original = &Value::String("Latest".to_string());
+        let expected_original = &Value::String("Latest".into());
 
         assert_eq!(
             release.meta().iter_errors().collect::<Vec<&Error>>(),
@@ -662,12 +662,12 @@ mod tests {
             site: Annotated::new("foo".to_string()),
             tags: Annotated::new(Tags(PairList(vec![
                 Annotated::new(TagEntry(
-                    Annotated::new("site".to_string()),
-                    Annotated::new("old".to_string()),
+                    Annotated::new("site".into()),
+                    Annotated::new("old".into()),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("server_name".to_string()),
-                    Annotated::new("old".to_string()),
+                    Annotated::new("server_name".into()),
+                    Annotated::new("old".into()),
                 )),
             ]))),
             ..Event::default()
@@ -682,12 +682,12 @@ mod tests {
             get_value!(event.tags!),
             &Tags(PairList(vec![
                 Annotated::new(TagEntry(
-                    Annotated::new("site".to_string()),
-                    Annotated::new("foo".to_string()),
+                    Annotated::new("site".into()),
+                    Annotated::new("foo".into()),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("server_name".to_string()),
-                    Annotated::new("foo".to_string()),
+                    Annotated::new("server_name".into()),
+                    Annotated::new("foo".into()),
                 )),
             ]))
         );
@@ -698,28 +698,28 @@ mod tests {
         let mut event = Annotated::new(Event {
             tags: Annotated::new(Tags(PairList(vec![
                 Annotated::new(TagEntry(
-                    Annotated::new("release".to_string()),
-                    Annotated::new("foo".to_string()),
+                    Annotated::new("release".into()),
+                    Annotated::new("foo".into()),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("dist".to_string()),
-                    Annotated::new("foo".to_string()),
+                    Annotated::new("dist".into()),
+                    Annotated::new("foo".into()),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("user".to_string()),
-                    Annotated::new("foo".to_string()),
+                    Annotated::new("user".into()),
+                    Annotated::new("foo".into()),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("filename".to_string()),
-                    Annotated::new("foo".to_string()),
+                    Annotated::new("filename".into()),
+                    Annotated::new("foo".into()),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("function".to_string()),
-                    Annotated::new("foo".to_string()),
+                    Annotated::new("function".into()),
+                    Annotated::new("foo".into()),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("something".to_string()),
-                    Annotated::new("else".to_string()),
+                    Annotated::new("something".into()),
+                    Annotated::new("else".into()),
                 )),
             ]))),
             ..Event::default()
@@ -735,16 +735,16 @@ mod tests {
         let mut event = Annotated::new(Event {
             tags: Annotated::new(Tags(PairList(vec![
                 Annotated::new(TagEntry(
-                    Annotated::new("".to_string()),
-                    Annotated::new("foo".to_string()),
+                    Annotated::new("".into()),
+                    Annotated::new("foo".into()),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("foo".to_string()),
-                    Annotated::new("".to_string()),
+                    Annotated::new("foo".into()),
+                    Annotated::new("".into()),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("something".to_string()),
-                    Annotated::new("else".to_string()),
+                    Annotated::new("something".into()),
+                    Annotated::new("else".into()),
                 )),
             ]))),
             ..Event::default()
@@ -757,15 +757,15 @@ mod tests {
             &Tags(PairList(vec![
                 Annotated::new(TagEntry(
                     Annotated::from_error(Error::nonempty(), None),
-                    Annotated::new("foo".to_string()),
+                    Annotated::new("foo".into()),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("foo".to_string()),
+                    Annotated::new("foo".into()),
                     Annotated::from_error(Error::nonempty(), None),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("something".to_string()),
-                    Annotated::new("else".to_string()),
+                    Annotated::new("something".into()),
+                    Annotated::new("else".into()),
                 )),
             ]))
         );
@@ -776,24 +776,24 @@ mod tests {
         let mut event = Annotated::new(Event {
             tags: Annotated::new(Tags(PairList(vec![
                 Annotated::new(TagEntry(
-                    Annotated::new("foo".to_string()),
-                    Annotated::new("1".to_string()),
+                    Annotated::new("foo".into()),
+                    Annotated::new("1".into()),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("bar".to_string()),
-                    Annotated::new("1".to_string()),
+                    Annotated::new("bar".into()),
+                    Annotated::new("1".into()),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("foo".to_string()),
-                    Annotated::new("2".to_string()),
+                    Annotated::new("foo".into()),
+                    Annotated::new("2".into()),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("bar".to_string()),
-                    Annotated::new("2".to_string()),
+                    Annotated::new("bar".into()),
+                    Annotated::new("2".into()),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("foo".to_string()),
-                    Annotated::new("3".to_string()),
+                    Annotated::new("foo".into()),
+                    Annotated::new("3".into()),
                 )),
             ]))),
             ..Event::default()
@@ -806,12 +806,12 @@ mod tests {
             get_value!(event.tags!),
             &Tags(PairList(vec![
                 Annotated::new(TagEntry(
-                    Annotated::new("foo".to_string()),
-                    Annotated::new("1".to_string()),
+                    Annotated::new("foo".into()),
+                    Annotated::new("1".into()),
                 )),
                 Annotated::new(TagEntry(
-                    Annotated::new("bar".to_string()),
-                    Annotated::new("1".to_string()),
+                    Annotated::new("bar".into()),
+                    Annotated::new("1".into()),
                 )),
             ]))
         );
@@ -826,7 +826,7 @@ mod tests {
             ..TraceContext::default()
         };
         object.insert(
-            "trace".to_string(),
+            "trace".into(),
             Annotated::new(ContextInner(Context::Trace(Box::new(trace_context)))),
         );
 
@@ -938,11 +938,11 @@ mod tests {
         let mut event = Annotated::new(Event {
         tags: Annotated::new(Tags(PairList(
             vec![Annotated::new(TagEntry(
-                Annotated::new("foobar".to_string()),
-                Annotated::new("...........................................................................................................................................................................................................".to_string()),
+                Annotated::new("foobar".into()),
+                Annotated::new("...........................................................................................................................................................................................................".into()),
             )), Annotated::new(TagEntry(
-                Annotated::new("foooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo".to_string()),
-                Annotated::new("bar".to_string()),
+                Annotated::new("foooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo".into()),
+                Annotated::new("bar".into()),
             ))]),
         )),
         ..Event::default()
@@ -954,12 +954,12 @@ mod tests {
             get_value!(event.tags!),
             &Tags(PairList(vec![
                 Annotated::new(TagEntry(
-                    Annotated::new("foobar".to_string()),
+                    Annotated::new("foobar".into()),
                     Annotated::from_error(Error::new(ErrorKind::ValueTooLong), None),
                 )),
                 Annotated::new(TagEntry(
                     Annotated::from_error(Error::new(ErrorKind::ValueTooLong), None),
-                    Annotated::new("bar".to_string()),
+                    Annotated::new("bar".into()),
                 )),
             ]))
         );
@@ -983,7 +983,7 @@ mod tests {
         let dist = &event.value().unwrap().dist;
         let result = &Annotated::<String>::from_error(
             Error::new(ErrorKind::ValueTooLong),
-            Some(Value::String("52df9022835246eeb317dbd739ccd059-52df9022835246eeb317dbd739ccd059-52df9022835246eeb317dbd739ccd059".to_string()))
+            Some(Value::String("52df9022835246eeb317dbd739ccd059-52df9022835246eeb317dbd739ccd059-52df9022835246eeb317dbd739ccd059".into()))
         );
         assert_eq!(dist, result);
     }
@@ -993,7 +993,7 @@ mod tests {
         let mut event = Annotated::new(Event {
             exceptions: Annotated::new(Values::new(vec![Annotated::new(Exception {
                 ty: Annotated::new("FooDivisionError".to_string()),
-                value: Annotated::new("hi".to_string().into()),
+                value: Annotated::new("hi".into()),
                 ..Exception::default()
             })])),
             stacktrace: Annotated::new(

@@ -82,13 +82,13 @@ mod tests {
         let context = Annotated::new(Context::Runtime(Box::new(RuntimeContext {
             name: Annotated::new("rustc".to_string()),
             version: Annotated::new("1.27.0".to_string()),
-            build: Annotated::new(LenientString("stable".to_string())),
+            build: Annotated::new("stable".into()),
             raw_description: Annotated::new("rustc 1.27.0 stable".to_string()),
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },

@@ -308,7 +308,6 @@ impl FromValue for Mechanism {
 
 #[cfg(test)]
 mod tests {
-    use relay_protocol::Map;
     use similar_asserts::assert_eq;
 
     use super::*;
@@ -365,10 +364,10 @@ mod tests {
             exception_id: Annotated::new(1),
             parent_id: Annotated::new(0),
             data: {
-                let mut map = Map::new();
+                let mut map = Object::new();
                 map.insert(
-                    "relevant_address".to_string(),
-                    Annotated::new(Value::String("0x1".to_string())),
+                    "relevant_address".into(),
+                    Annotated::new(Value::String("0x1".into())),
                 );
                 Annotated::new(map)
             },
@@ -396,8 +395,8 @@ mod tests {
                 other: {
                     let mut map = Object::new();
                     map.insert(
-                        "other".to_string(),
-                        Annotated::new(Value::String("value".to_string())),
+                        "other".into(),
+                        Annotated::new(Value::String("value".into())),
                     );
                     map
                 },
@@ -405,8 +404,8 @@ mod tests {
             other: {
                 let mut map = Object::new();
                 map.insert(
-                    "other".to_string(),
-                    Annotated::new(Value::String("value".to_string())),
+                    "other".into(),
+                    Annotated::new(Value::String("value".into())),
                 );
                 map
             },
@@ -483,10 +482,10 @@ mod tests {
             exception_id: Annotated::empty(),
             parent_id: Annotated::empty(),
             data: {
-                let mut map = Map::new();
+                let mut map = Object::new();
                 map.insert(
-                    "relevant_address".to_string(),
-                    Annotated::new(Value::String("0x1".to_string())),
+                    "relevant_address".into(),
+                    Annotated::new(Value::String("0x1".into())),
                 );
                 Annotated::new(map)
             },

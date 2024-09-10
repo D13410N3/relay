@@ -30,6 +30,11 @@ url = { workspace = true }
 uuid = { workspace = true }
 
 [dev-dependencies]
+criterion = { workspace = true }
 insta = { workspace = true }
 relay-protocol = { workspace = true, features = ["test"] }
 similar-asserts = { workspace = true }
+
+[[bench]]
+name = "bench_annotated"
+harness = false

@@ -1,12 +1,13 @@
+use compact_str::ToCompactString;
 use serde::ser::{SerializeMap, SerializeSeq};
 use serde::{Serialize, Serializer};
 use uuid::Uuid;
 
-use crate::annotated::{Annotated, MetaMap, MetaTree};
+use crate::annotated::{Annotated, MetaMap};
 use crate::macros::derive_string_meta_structure;
 use crate::meta::{Error, Meta};
 use crate::traits::{Empty, FromValue, IntoValue, SkipSerialization};
-use crate::value::{Array, Map, Object, Value};
+use crate::value::{Array, CompactString, Object, Value};
 
 // This needs to be public because the derive crate emits it
 #[doc(hidden)]
@@ -100,8 +101,38 @@ impl Empty for String {
     }
 }
 
-derive_from_value!(String, String, "a string");
-derive_to_value!(String, String);
+impl FromValue for String {
+    fn from_value(value: Annotated<Value>) -> Annotated<Self> {
+        CompactString::from_value(value).map_value(|s| s.into())
+    }
+}
+
+impl IntoValue for String {
+    fn into_value(self) -> Value {
+        CompactString::from(self).into_value()
+    }
+
+    fn serialize_payload<S>(&self, s: S, _behavior: SkipSerialization) -> Result<S::Ok, S::Error>
+    where
+        Self: Sized,
+        S: Serializer,
+    {
+        self.serialize(s)
+    }
+}
+
+// derive_from_value!(String, String, "a string");
+// derive_to_value!(String, String);
+
+impl Empty for CompactString {
+    #[inline]
+    fn is_empty(&self) -> bool {
+        self.is_empty()
+    }
+}
+
+derive_from_value!(CompactString, String, "a string");
+derive_to_value!(CompactString, String);
 
 impl Empty for bool {
     #[inline]
@@ -239,7 +270,7 @@ where
         for (idx, item) in self.iter().enumerate() {
             let tree = IntoValue::extract_meta_tree(item);
             if !tree.is_empty() {
-                children.insert(idx.to_string(), tree);
+                children.insert(idx.to_compact_string(), tree);
             }
         }
         children
@@ -313,7 +344,7 @@ where
         map_ser.end()
     }
 
-    fn extract_child_meta(&self) -> Map<String, MetaTree>
+    fn extract_child_meta(&self) -> MetaMap
     where
         Self: Sized,
     {
@@ -321,7 +352,7 @@ where
         for (key, value) in self.iter() {
             let tree = IntoValue::extract_meta_tree(value);
             if !tree.is_empty() {
-                children.insert(key.to_string(), tree);
+                children.insert(key.clone(), tree);
             }
         }
         children
@@ -374,7 +405,7 @@ impl IntoValue for Value {
         Serialize::serialize(self, s)
     }
 
-    fn extract_child_meta(&self) -> Map<String, MetaTree>
+    fn extract_child_meta(&self) -> MetaMap
     where
         Self: Sized,
     {
@@ -384,7 +415,7 @@ impl IntoValue for Value {
                 for (key, value) in items.iter() {
                     let tree = IntoValue::extract_meta_tree(value);
                     if !tree.is_empty() {
-                        children.insert(key.to_string(), tree);
+                        children.insert(key.clone(), tree);
                     }
                 }
             }
@@ -392,7 +423,7 @@ impl IntoValue for Value {
                 for (idx, item) in items.iter().enumerate() {
                     let tree = IntoValue::extract_meta_tree(item);
                     if !tree.is_empty() {
-                        children.insert(idx.to_string(), tree);
+                        children.insert(idx.to_compact_string(), tree);
                     }
                 }
             }
@@ -549,7 +580,7 @@ macro_rules! tuple_meta_structure {
                 $({
                     let tree = IntoValue::extract_meta_tree($name);
                     if !tree.is_empty() {
-                        children.insert(idx.to_string(), tree);
+                        children.insert(idx.to_compact_string(), tree);
                     }
                     idx += 1;
                 })*;

@@ -5,7 +5,7 @@
 use std::fmt;
 use std::str::FromStr;
 
-use relay_protocol::{Annotated, Empty, FromValue, IntoValue, Object, Value};
+use relay_protocol::{Annotated, CompactString, Empty, FromValue, IntoValue, Object, Value};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -23,7 +23,7 @@ pub enum NetworkReportPhases {
     /// The error occurred during the transmission of request and response .
     Application,
     /// For forward-compatibility.
-    Other(String),
+    Other(CompactString),
 }
 
 impl NetworkReportPhases {
@@ -71,11 +71,13 @@ impl FromStr for NetworkReportPhases {
     type Err = ParseNetworkReportPhaseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s.to_lowercase().as_str() {
+        let mut s = CompactString::new(s);
+        s.make_ascii_lowercase();
+        Ok(match s.as_ref() {
             "dns" => NetworkReportPhases::DNS,
             "connection" => NetworkReportPhases::Connections,
             "application" => NetworkReportPhases::Application,
-            unknown => NetworkReportPhases::Other(unknown.to_string()),
+            _ => NetworkReportPhases::Other(s),
         })
     }
 }
@@ -103,7 +105,10 @@ impl FromValue for NetworkReportPhases {
 
 impl IntoValue for NetworkReportPhases {
     fn into_value(self) -> Value {
-        Value::String(self.to_string())
+        Value::String(match self {
+            Self::Other(s) => s,
+            _ => self.as_str().into(),
+        })
     }
 
     fn serialize_payload<S>(
@@ -115,7 +120,7 @@ impl IntoValue for NetworkReportPhases {
         Self: Sized,
         S: serde::Serializer,
     {
-        Serialize::serialize(&self.to_string(), s)
+        Serialize::serialize(self.as_str(), s)
     }
 }
 
