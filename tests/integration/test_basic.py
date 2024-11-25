@@ -346,3 +346,73 @@ def test_root_project_same(mini_sentry, relay):
     same_dsn = mini_sentry.get_dsn_public_key(project_id)
     txn = send_transaction_with_dsc(mini_sentry, relay, project_id, same_dsn)
     assert txn
+
+
+@pytest.mark.parametrize("with_attachment", [False, True])
+def test_transaction_w_attachment(
+    with_attachment,
+    mini_sentry,
+    relay_with_processing,
+    attachments_consumer,
+    outcomes_consumer,
+    transactions_consumer,
+):
+    import json
+    from sentry_sdk.envelope import Envelope, Item, PayloadRef
+
+    attachments_consumer = attachments_consumer()
+    outcomes_consumer = outcomes_consumer()
+    transactions_consumer = transactions_consumer()
+
+    relay = relay_with_processing()
+
+    project_id = 42
+    project_config = mini_sentry.add_full_project_config(project_id)
+    project_config["config"].setdefault("features", []).extend(
+        ["organizations:profiling"]
+    )
+
+    envelope = Envelope()
+
+    now = datetime.datetime.now(datetime.UTC)
+    transaction = {
+        "type": "transaction",
+        "timestamp": now.isoformat(),
+        "start_timestamp": (now - datetime.timedelta(seconds=2)).isoformat(),
+        "spans": [],
+        "contexts": {
+            "trace": {
+                "op": "hi",
+                "trace_id": "a0fa8803753e40fd8124b21eeb2986b5",
+                "span_id": "968cff94913ebb07",
+            }
+        },
+        "transaction": "hi",
+    }
+    transaction_item = Item(
+        payload=PayloadRef(bytes=json.dumps(transaction).encode()), type="transaction"
+    )
+    envelope.add_item(transaction_item)
+
+    if with_attachment:
+        attachment_item = Item(payload=PayloadRef(bytes=b"hi"), type="attachment")
+        envelope.add_item(attachment_item)
+
+    relay.send_envelope(project_id, envelope)
+
+    if with_attachment:
+        attachment_event = attachments_consumer.get_individual_attachment()
+        assert attachment_event["attachment"]["data"] == b"hi"
+        event, _ = attachments_consumer.get_event()
+        assert event["type"] == "transaction"
+        assert event["contexts"]["trace"]["span_id"] == "968cff94913ebb07"
+
+        transactions_consumer.assert_empty()
+    else:
+        event, _ = transactions_consumer.get_event()
+        assert event["type"] == "transaction"
+        assert event["contexts"]["trace"]["span_id"] == "968cff94913ebb07"
+
+        attachments_consumer.assert_empty()
+
+    outcomes_consumer.assert_empty()
