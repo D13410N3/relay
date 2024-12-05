@@ -1,12 +1,11 @@
 name: Validate Deployment Pipelines
 
 on:
+  pull_request:
   push:
     branches:
       - master
       - test/pipeline-*
-
-  pull_request:
 
 jobs:
     files-changed:
