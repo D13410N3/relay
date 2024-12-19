@@ -22,12 +22,11 @@ WORKDIR /work
 
 EXPOSE 3000
 
-COPY $TARGETPLATFORM/relay /bin/relay
+COPY ./relay-bin /bin/relay
 RUN chmod +x /bin/relay
-COPY $TARGETPLATFORM/relay-debug.zip /opt/relay-debug.zip
-COPY $TARGETPLATFORM/relay.src.zip /opt/relay.src.zip
+COPY ./relay-debug.zip /opt/relay-debug.zip
+COPY ./relay.src.zip /opt/relay.src.zip
 
 COPY ./docker-entrypoint.sh /
 ENTRYPOINT ["/bin/bash", "/docker-entrypoint.sh"]
 CMD ["run"]
-

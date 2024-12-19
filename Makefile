@@ -21,11 +21,11 @@ build: setup-git ## build relay with all features enabled without debug info
 .PHONY: build
 
 release: setup-git ## build production binary of the relay with debug info
-	@cd relay && cargo +stable build --release $(if ${RELAY_FEATURES}, --features ${RELAY_FEATURES}) ${RELAY_CARGO_ARGS}
+	@cd relay && cargo +stable build --release --all --all-features ${RELAY_CARGO_ARGS}
 .PHONY: release
 
 build-linux-release: setup-git ## build linux release of the relay
-	cd relay && cargo build --release $(if ${RELAY_FEATURES}, --features ${RELAY_FEATURES}) ${RELAY_CARGO_ARGS}
+	cd relay && cargo build --release --all --all-features ${RELAY_CARGO_ARGS}
 	objcopy --only-keep-debug target/${TARGET}/release/relay{,.debug}
 	objcopy --strip-debug --strip-unneeded target/${TARGET}/release/relay
 	objcopy --add-gnu-debuglink target/${TARGET}/release/relay{.debug,}
