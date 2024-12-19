@@ -25,10 +25,10 @@ release: setup-git ## build production binary of the relay with debug info
 .PHONY: release
 
 build-linux-release: setup-git ## build linux release of the relay
-    cd relay && cargo build --release --all --all-features ${RELAY_CARGO_ARGS}
-    objcopy --only-keep-debug target/release/relay{,.debug}
-    objcopy --strip-debug --strip-unneeded target/release/relay
-    objcopy --add-gnu-debuglink target/release/relay{.debug,}
+	cd relay && cargo build --release --all --all-features ${RELAY_CARGO_ARGS}
+	objcopy --only-keep-debug target/release/relay{,.debug}
+	objcopy --strip-debug --strip-unneeded target/release/relay
+	objcopy --add-gnu-debuglink target/release/relay{.debug,}
 .PHONY: build-linux-release
 
 collect-source-bundle: setup-git ## copy the built relay binary to current folder and collects debug bundles
