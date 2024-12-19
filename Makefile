@@ -25,18 +25,18 @@ release: setup-git ## build production binary of the relay with debug info
 .PHONY: release
 
 build-linux-release: setup-git ## build linux release of the relay
-	cd relay && cargo build --release --all --all-features ${RELAY_CARGO_ARGS}
-	objcopy --only-keep-debug target/${TARGET}/release/relay{,.debug}
-	objcopy --strip-debug --strip-unneeded target/${TARGET}/release/relay
-	objcopy --add-gnu-debuglink target/${TARGET}/release/relay{.debug,}
+    cd relay && cargo build --release --all --all-features ${RELAY_CARGO_ARGS}
+    objcopy --only-keep-debug target/release/relay{,.debug}
+    objcopy --strip-debug --strip-unneeded target/release/relay
+    objcopy --add-gnu-debuglink target/release/relay{.debug,}
 .PHONY: build-linux-release
 
 collect-source-bundle: setup-git ## copy the built relay binary to current folder and collects debug bundles
-	mv target/${TARGET}/release/relay ./relay-bin
-	zip relay-debug.zip target/${TARGET}/release/relay.debug
+	mv target/release/relay ./relay-bin
+	zip relay-debug.zip target/release/relay.debug
 	sentry-cli --version
-	sentry-cli difutil bundle-sources target/${TARGET}/release/relay.debug
-	mv target/${TARGET}/release/relay.src.zip ./relay.src.zip
+	sentry-cli difutil bundle-sources target/release/relay.debug
+	mv target/release/relay.src.zip ./relay.src.zip
 .PHONY: collect-source-bundle
 
 build-release-with-bundles: build-linux-release collect-source-bundle
